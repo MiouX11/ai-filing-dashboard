@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 批量立案监控平台</title>
+<style>
+  :root {
+    --bg: #060b14;
+    --card-bg: #0d1525;
+    --border: #1a2740;
+    --accent: #00d4ff;
+    --accent2: #7c3aed;
+    --work: #00ff88;
+    --done: #f59e0b;
+    --standby: #64748b;
+    --text: #e2e8f0;
+    --text-dim: #8899b4;
+    --danger: #ff3b5c;
+    --debt: #f97316;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', monospace;
+    min-height: 100vh; overflow-x: hidden;
+  }
+
+  #bgCanvas { position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:0; }
+  .scanlines {
+    position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:1;
+    background:repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+  }
+  .scan-beam {
+    position:fixed; top:0; left:0; width:100%; height:2px; pointer-events:none; z-index:1;
+    background:linear-gradient(90deg, transparent, rgba(0,212,255,0.12), transparent);
+    animation:scanDown 8s linear infinite;
+  }
+  @keyframes scanDown { 0%{top:0} 100%{top:100%} }
+
+  .app { position:relative; z-index:2; max-width:1720px; margin:0 auto; padding:12px 16px; height:100vh; display:flex; flex-direction:column; }
+
+  /* ====== 顶部栏 ====== */
+  .header {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:12px 20px; flex-shrink:0;
+    background:rgba(13,21,37,0.9); backdrop-filter:blur(16px);
+    border:1px solid var(--border); border-radius:10px; margin-bottom:8px;
+    position:relative; overflow:hidden;
+  }
+  .header::before { content:''; position:absolute; bottom:0; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,var(--debt),var(--accent),transparent); opacity:0.6; }
+  .header-left { display:flex; align-items:center; gap:10px; }
+  .logo {
+    width:38px; height:38px; background:var(--accent);
+    border:none; border-radius:6px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:18px; font-weight:700; color:#060b14;
+    position:relative;
+  }
+  .logo::after { content:''; position:absolute; inset:0; border-radius:6px; background:linear-gradient(135deg,rgba(255,255,255,0.2),transparent 60%); pointer-events:none; }
+  .title-group { display:flex; flex-direction:column; gap:1px; }
+  .title-group h1 { font-size:15px; font-weight:600; letter-spacing:1px; color:#e2e8f0; background:none; -webkit-background-clip:unset; -webkit-text-fill-color:unset; }
+  .title-group .sub { font-size:9px; color:var(--text-dim); }
+  .header-center { display:flex; gap:18px; font-size:11px; color:var(--text-dim); }
+  .header-center .stat { text-align:center; }
+  .header-center .stat .val { font-size:18px; font-weight:700; color:var(--text); font-family:'Courier New',monospace; }
+  .header-right { display:flex; gap:10px; align-items:center; }
+  .earn-box {
+    background:rgba(0,255,136,0.05); border:1px solid rgba(0,255,136,0.2);
+    border-radius:9px; padding:8px 14px; position:relative; overflow:hidden;
+  }
+  .earn-box::after { content:''; position:absolute; top:0; left:0; right:0; bottom:0; background:linear-gradient(135deg,rgba(0,255,136,0.03),transparent); pointer-events:none; }
+  .earn-box .label { font-size:9px; color:#5efaa8; }
+  .earn-box .amount { font-size:22px; font-weight:800; font-family:'Courier New',monospace; background:linear-gradient(135deg,#4ade80,#00ff88); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+  .earn-box .rate { font-size:9px; color:var(--text-dim); margin-top:1px; }
+  .token-box {
+    background:rgba(0,212,255,0.05); border:1px solid rgba(0,212,255,0.2);
+    border-radius:9px; padding:8px 14px; position:relative; overflow:hidden;
+  }
+  .token-box::after { content:''; position:absolute; top:0; left:0; right:0; bottom:0; background:linear-gradient(135deg,rgba(0,212,255,0.03),transparent); pointer-events:none; }
+  .token-box .label { font-size:9px; color:#7dd3fc; }
+  .token-box .amount { font-size:22px; font-weight:800; font-family:'Courier New',monospace; background:linear-gradient(135deg,#7dd3fc,#00d4ff); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+  .token-box .rate { font-size:9px; color:var(--text-dim); margin-top:1px; }
+  .status-dots { display:flex; gap:10px; font-size:10px; }
+  .status-dots .dot { display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:3px; }
+  .dot.working { background:var(--work); box-shadow:0 0 8px var(--work); animation:dotPulse 1.5s infinite; }
+  @keyframes dotPulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+  .dot.done { background:var(--done); box-shadow:0 0 6px var(--done); }
+  .dot.standby { background:var(--standby); }
+
+  /* ====== 统计条 ====== */
+  .stats-bar { display:flex; gap:7px; margin-bottom:7px; flex-shrink:0; }
+  .stat-card {
+    flex:1; background:rgba(13,21,37,0.8); border:1px solid var(--border);
+    border-radius:9px; padding:8px 12px; display:flex; align-items:center; gap:8px;
+    transition:all 0.3s;
+  }
+  .stat-card:hover { border-color:rgba(249,115,22,0.3); box-shadow:0 0 15px rgba(0,0,0,0.3); }
+  .stat-card .icon { width:30px; height:30px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:14px; background:rgba(249,115,22,0.06); border:1px solid rgba(249,115,22,0.1); }
+  .stat-card .info .n { font-size:20px; font-weight:700; font-family:'Courier New',monospace; }
+  .stat-card .info .l { font-size:9px; color:var(--text-dim); }
+
+  /* ====== 主内容区 ====== */
+  .main-content { flex:1; display:flex; gap:8px; min-height:0; }
+
+  /* ---- 左侧栏 ---- */
+  .left-panel { width:260px; flex-shrink:0; display:flex; flex-direction:column; gap:7px; min-height:0; }
+  .panel-card { background:rgba(13,21,37,0.8); border:1px solid var(--border); border-radius:9px; padding:10px 12px; flex-shrink:0; }
+  .panel-card h4 { font-size:10px; color:var(--text-dim); margin-bottom:7px; display:flex; align-items:center; gap:5px; }
+  .pie-wrap { position:relative; width:130px; height:130px; margin:0 auto; }
+  .pie-wrap canvas { width:130px; height:130px; }
+  .pie-legend { margin-top:6px; }
+  .pie-legend .item { display:flex; align-items:center; justify-content:space-between; font-size:9px; padding:1.5px 0; color:var(--text-dim); }
+  .pie-legend .item .swatch { display:inline-block; width:7px; height:7px; border-radius:2px; margin-right:4px; }
+  .pie-legend .item .pct { color:var(--text); font-weight:600; font-family:'Courier New',monospace; }
+
+  .completion-feed {
+    flex:1; min-height:0;
+    background:rgba(13,21,37,0.9); border:1px solid var(--border);
+    border-radius:9px; padding:0;
+    display:flex; flex-direction:column;
+    position:relative; overflow:hidden;
+  }
+  .completion-feed::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,var(--work),transparent); z-index:1; opacity:0.5; }
+  .completion-feed .feed-header { padding:7px 11px; display:flex; align-items:center; gap:6px; border-bottom:1px solid var(--border); background:rgba(0,255,136,0.02); flex-shrink:0; }
+  .completion-feed .feed-header h4 { font-size:10px; color:var(--text-dim); display:flex; align-items:center; gap:5px; margin:0; }
+  .flow-indicator { width:6px; height:6px; background:var(--work); border-radius:50%; animation:dotPulse 1s infinite; }
+  .completion-feed .feed-body { flex:1; overflow:hidden; position:relative; }
+  .completion-feed .feed-scroll { animation:scrollUp 35s linear infinite; }
+  .completion-feed .feed-scroll.paused { animation-play-state:paused; }
+  @keyframes scrollUp { 0%{transform:translateY(0)} 100%{transform:translateY(-50%)} }
+  .feed-item { display:flex; align-items:center; flex-wrap:wrap; gap:2px 6px; padding:4px 11px; font-size:9px; border-bottom:1px solid rgba(255,255,255,0.02); transition:background 0.3s; cursor:default; }
+  .feed-item:hover { background:rgba(249,115,22,0.05); }
+  .feed-item .fi-time { color:#475569; font-family:'Courier New',monospace; font-size:8px; }
+  .feed-item .fi-robot { color:var(--debt); font-family:'Courier New',monospace; font-weight:600; }
+  .feed-item .fi-case { color:var(--text-dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:50px; }
+  .feed-item .fi-amount { color:#fbbf24; font-size:8px; }
+  .feed-item .fi-badge { font-size:7px; padding:1px 5px; border-radius:4px; background:rgba(0,255,136,0.1); color:#00ff88; }
+  .feed-item .fi-money { color:var(--work); font-weight:700; font-family:'Courier New',monospace; margin-left:auto; }
+
+  /* ---- 中间面板 ---- */
+  .center-panel { flex:1; display:flex; flex-direction:column; min-width:0; overflow-y:auto; padding-right:4px; }
+
+  /* 分组折叠 */
+  .region-group {
+    background:rgba(13,21,37,0.8); border:1px solid var(--border);
+    border-radius:9px; margin-bottom:6px; overflow:hidden;
+  }
+  .region-group.expanded { border-color:rgba(249,115,22,0.25); }
+  .region-header {
+    display:flex; align-items:center; gap:10px;
+    padding:10px 14px; cursor:pointer;
+    transition:background 0.25s;
+    user-select:none;
+  }
+  .region-header:hover { background:rgba(249,115,22,0.04); }
+  .region-header .expand-icon {
+    width:18px; height:18px; border-radius:4px;
+    background:rgba(249,115,22,0.1); color:var(--debt);
+    display:flex; align-items:center; justify-content:center;
+    font-size:12px; transition:transform 0.3s;
+    flex-shrink:0;
+  }
+  .region-group.expanded .expand-icon { transform:rotate(90deg); }
+  .region-header .region-name { font-size:13px; font-weight:600; color:var(--text); }
+  .region-header .region-stats { display:flex; gap:10px; margin-left:auto; font-size:9px; color:var(--text-dim); }
+  .region-header .region-stats span { display:flex; align-items:center; gap:3px; }
+  .region-header .region-stats .rs-dot { width:5px; height:5px; border-radius:50%; }
+  .region-header .region-total-debt { font-size:10px; color:var(--debt); font-weight:600; margin-left:10px; }
+
+  /* 折叠的机器人子网格 */
+  .region-body {
+    display:none;
+    padding:0 10px 10px 10px;
+  }
+  .region-group.expanded .region-body { display:block; }
+
+  .region-robots {
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(140px, 1fr));
+    gap:6px;
+  }
+
+  .robot-card {
+    background:var(--card-bg); border:1px solid var(--border);
+    border-radius:7px; padding:8px;
+    transition:all 0.25s; position:relative; overflow:hidden;
+    cursor:pointer;
+  }
+  .robot-card::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,rgba(249,115,22,0.08),transparent); }
+  .robot-card:hover { border-color:var(--debt); transform:translateY(-2px); box-shadow:0 6px 20px rgba(0,0,0,0.5); }
+  .robot-card.selected { border-color:var(--debt) !important; box-shadow:0 0 20px rgba(249,115,22,0.35), inset 0 0 12px rgba(249,115,22,0.03) !important; z-index:2; }
+  .robot-card.working { border-left:2px solid var(--work); }
+  .robot-card.done { border-left:2px solid var(--done); opacity:0.7; }
+  .robot-card.standby { border-left:2px solid var(--standby); opacity:0.5; }
+
+  .robot-card .r-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:3px; }
+  .robot-card .r-name { font-size:10px; font-weight:600; font-family:'Courier New',monospace; }
+  .robot-card .r-status { font-size:7px; padding:1px 5px; border-radius:7px; }
+  .r-status.s-working { background:rgba(0,255,136,0.15); color:#00ff88; }
+  .r-status.s-done { background:rgba(245,158,11,0.15); color:#fbbf24; }
+  .r-status.s-standby { background:rgba(100,116,139,0.15); color:#9ca3af; }
+  .robot-card .r-amount { font-size:8px; color:var(--debt); margin:3px 0; }
+  .robot-card .r-progress { height:2px; background:rgba(255,255,255,0.04); border-radius:1px; margin:3px 0; overflow:hidden; }
+  .robot-card .r-progress-bar { height:100%; border-radius:1px; transition:width 1s linear; }
+  .robot-card.working .r-progress-bar { background:linear-gradient(90deg, #00ff88, #00d4ff); box-shadow:0 0 6px rgba(0,255,136,0.3); }
+  .robot-card.done .r-progress-bar { background:linear-gradient(90deg, #f59e0b, #fbbf24); }
+  .robot-card .r-meta { display:flex; justify-content:space-between; font-size:8px; color:var(--text-dim); }
+  .robot-card .r-meta .earned { color:#00ff88; font-weight:600; }
+
+  .robot-card.working::after { content:''; position:absolute; top:0; left:0; right:0; bottom:0; background:radial-gradient(circle at 50% 0%, rgba(0,255,136,0.05), transparent 60%); animation:cardGlow 2.5s ease-in-out infinite; pointer-events:none; }
+  @keyframes cardGlow { 0%,100%{opacity:0.3} 50%{opacity:1} }
+  .robot-card.flash { animation:flashEarn 0.5s ease-out; }
+  @keyframes flashEarn { 0%{border-color:var(--debt); box-shadow:0 0 25px rgba(249,115,22,0.5)} 100%{border-color:var(--border); box-shadow:none} }
+
+  /* ---- 右侧栏 ---- */
+  .right-panel { width:300px; flex-shrink:0; display:flex; flex-direction:column; gap:7px; min-height:0; }
+  .detail-card { background:rgba(13,21,37,0.9); border:1px solid var(--border); border-radius:9px; padding:12px; flex-shrink:0; }
+  .detail-card h4 { font-size:11px; margin-bottom:9px; display:flex; align-items:center; gap:7px; color:var(--text-dim); }
+  .robot-title { font-size:18px; font-weight:700; margin-bottom:2px; font-family:'Courier New',monospace; }
+  .robot-subtitle { font-size:9px; color:var(--text-dim); margin-bottom:10px; }
+  .detail-row { display:flex; justify-content:space-between; padding:4px 0; font-size:9px; border-bottom:1px solid rgba(255,255,255,0.03); }
+  .detail-row .dl { color:var(--text-dim); }
+  .detail-row .dv { color:var(--text); font-weight:500; font-family:'Courier New',monospace; }
+  .debt-highlight { color:var(--debt) !important; font-size:13px !important; font-weight:700 !important; }
+
+  .thinking-section { margin-top:10px; }
+  .section-label { font-size:8px; color:var(--text-dim); text-transform:uppercase; letter-spacing:1.5px; margin-bottom:6px; display:flex; align-items:center; gap:5px; }
+  .brain-pulse { width:5px; height:5px; background:var(--debt); border-radius:50%; animation:brainBlink 0.7s infinite; box-shadow:0 0 6px var(--debt); }
+  @keyframes brainBlink { 0%,100%{opacity:1; box-shadow:0 0 8px var(--debt)} 50%{opacity:0.3; box-shadow:0 0 2px var(--debt)} }
+  .think-step { font-size:8px; padding:5px 8px; margin-bottom:2px; background:rgba(249,115,22,0.03); border-left:2px solid rgba(249,115,22,0.15); border-radius:0 5px 5px 0; color:var(--text-dim); transition:all 0.4s; }
+  .think-step.active { border-left-color:var(--debt); color:#fdba74; background:rgba(249,115,22,0.08); animation:thinkGlow 1.5s ease-in-out infinite; }
+  @keyframes thinkGlow { 0%,100%{background:rgba(249,115,22,0.08)} 50%{background:rgba(249,115,22,0.15)} }
+  .think-step.done { border-left-color:var(--work); color:#6ee7b7; background:rgba(0,255,136,0.04); }
+  .think-step .step-icon { margin-right:4px; }
+
+  .empty-detail { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; color:var(--text-dim); font-size:11px; text-align:center; padding:20px 0; }
+  .empty-detail .big-icon { font-size:40px; margin-bottom:8px; opacity:0.2; }
+
+  .task-queue {
+    flex:1; min-height:0;
+    background:rgba(13,21,37,0.8); border:1px solid var(--border);
+    border-radius:9px; padding:9px 12px; overflow-y:auto;
+  }
+  .task-queue h4 { font-size:10px; margin-bottom:5px; color:var(--text-dim); }
+  .tq-item { font-size:8px; padding:3px 0; color:var(--text-dim); border-bottom:1px solid rgba(255,255,255,0.02); display:flex; gap:5px; }
+  .tq-item .tq-name { color:var(--debt); font-family:'Courier New',monospace; }
+  .tq-item .tq-case { flex:1; }
+  .tq-item .tq-prog { color:var(--work); white-space:nowrap; font-family:'Courier New',monospace; }
+
+  /* ---- 底部日志 ---- */
+  .bottom-area { flex-shrink:0; margin-top:7px; }
+  .log-panel { background:rgba(13,21,37,0.8); border:1px solid var(--border); border-radius:9px; padding:7px 12px; max-height:85px; overflow-y:auto; }
+  .log-panel h4 { font-size:10px; margin-bottom:4px; color:var(--text-dim); display:flex; align-items:center; gap:5px; }
+  .live-dot { width:5px; height:5px; background:var(--danger); border-radius:50%; animation:liveBlink 0.8s infinite; }
+  @keyframes liveBlink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  .log-entry { font-size:8px; padding:1.5px 0; border-bottom:1px solid rgba(255,255,255,0.02); color:var(--text-dim); display:flex; gap:5px; }
+  .log-entry .time { color:#475569; white-space:nowrap; font-family:'Courier New',monospace; }
+  .log-entry .msg { flex:1; }
+  .log-entry .money { color:var(--work); font-weight:600; white-space:nowrap; font-family:'Courier New',monospace; }
+
+  ::-webkit-scrollbar { width:3px; }
+  ::-webkit-scrollbar-track { background:transparent; }
+  ::-webkit-scrollbar-thumb { background:rgba(249,115,22,0.15); border-radius:2px; }
+
+  @media (max-width:1200px) {
+    .main-content { flex-direction:column; }
+    .left-panel { width:100%; flex-direction:row; }
+    .left-panel .panel-card { flex:1; }
+    .completion-feed { height:140px; }
+    .right-panel { width:100%; }
+    .task-queue { height:120px; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="bgCanvas"></canvas>
+<div class="scanlines"></div>
+<div class="scan-beam"></div>
+
+<div class="app">
+  <!-- ====== 顶部栏 ====== -->
+  <div class="header">
+    <div class="header-left">
+      <div class="logo"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="2" y="2" width="20" height="20" rx="3" stroke="#060b14" stroke-width="2.5"/><line x1="7" y1="7" x2="17" y2="7" stroke="#060b14" stroke-width="2" stroke-linecap="round"/><line x1="7" y1="12" x2="17" y2="12" stroke="#060b14" stroke-width="2" stroke-linecap="round"/><line x1="7" y1="17" x2="13" y2="17" stroke="#060b14" stroke-width="2" stroke-linecap="round"/></svg></div>
+      <div class="title-group">
+        <h1>新华商数字（深圳）科技有限公司</h1>
+        <span class="sub">AI 批量立案监控平台 · 智能案卷处理 v4.1 · 标的额 < ¥10,000 · 全自动运行中</span>
+      </div>
+    </div>
+    <div class="header-center">
+      <div class="stat"><div class="val" id="totalTasks">0</div><span style="font-size:9px;">完成任务</span></div>
+      <div class="stat"><div class="val" id="successRate">99.8%</div><span style="font-size:9px;">成功率</span></div>
+      <div class="stat"><div class="val" id="uptime">00:00:00</div><span style="font-size:9px;">运行时间</span></div>
+    </div>
+    <div class="header-right">
+      <div class="earn-box">
+        <div class="label">⚡ 当前时薪</div>
+        <div class="amount" id="hourlyRate">¥0</div>
+        <div class="rate">/小时</div>
+      </div>
+      <div class="earn-box">
+        <div class="label">💰 累计收益</div>
+        <div class="amount" id="totalEarnings">¥0.00</div>
+        <div class="rate" id="totalTasksSmall">0 个任务</div>
+      </div>
+      <div class="token-box">
+        <div class="label">⚡ Token 速率</div>
+        <div class="amount" id="tokenRate">0</div>
+        <div class="rate">K/分钟</div>
+      </div>
+      <div class="token-box">
+        <div class="label">🔢 累计Token</div>
+        <div class="amount" id="totalTokens">0</div>
+        <div class="rate">K tokens</div>
+      </div>
+      <div class="status-dots">
+        <div><span class="dot working"></span>工作中 <b id="cntWorking">0</b></div>
+        <div><span class="dot done"></span>已完结 <b id="cntDone">0</b></div>
+        <div><span class="dot standby"></span>待命 <b id="cntStandby">0</b></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== 统计条 ====== -->
+  <div class="stats-bar">
+    <div class="stat-card"><div class="icon">📋</div><div class="info"><div class="n" id="casesFiled">0</div><div class="l">已立案数</div></div></div>
+    <div class="stat-card"><div class="icon">💰</div><div class="info"><div class="n" id="totalDebt">¥0</div><div class="l">累计追偿标的</div></div></div>
+    <div class="stat-card"><div class="icon">⏱</div><div class="info"><div class="n" id="avgTime">19.8min</div><div class="l">平均立案耗时</div></div></div>
+    <div class="stat-card"><div class="icon">📊</div><div class="info"><div class="n" id="avgDebt">¥0</div><div class="l">平均欠款金额</div></div></div>
+    <div class="stat-card"><div class="icon">🏛</div><div class="info"><div class="n" id="courts">10</div><div class="l">对接区域法院</div></div></div>
+  </div>
+
+  <!-- ====== 主内容区 ====== -->
+  <div class="main-content">
+    <!-- 左侧 -->
+    <div class="left-panel">
+      <div class="panel-card">
+        <h4>📊 欠款类型分布</h4>
+        <div class="pie-wrap"><canvas id="pieCanvas" width="130" height="130"></canvas></div>
+        <div class="pie-legend" id="pieLegend"></div>
+      </div>
+      <div class="completion-feed" id="completionFeed"
+           onmouseenter="document.querySelector('.feed-scroll').classList.add('paused')"
+           onmouseleave="document.querySelector('.feed-scroll').classList.remove('paused')">
+        <div class="feed-header"><h4><span class="flow-indicator"></span>完成状态 · 实时滚动</h4></div>
+        <div class="feed-body"><div class="feed-scroll" id="feedScroll"></div></div>
+      </div>
+    </div>
+
+    <!-- 中间 - 区域分组 -->
+    <div class="center-panel" id="centerPanel"></div>
+
+    <!-- 右侧 -->
+    <div class="right-panel">
+      <div class="detail-card" id="detailCard">
+        <div class="empty-detail"><div class="big-icon">🤖</div><div>点击机器人<br>查看详细状态</div></div>
+      </div>
+      <div class="task-queue" id="taskQueue">
+        <h4>⚡ 即将完成</h4>
+        <div id="queueEntries"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 底部日志 -->
+  <div class="bottom-area">
+    <div class="log-panel" id="logPanel">
+      <h4><span class="live-dot"></span>实时操作日志</h4>
+      <div id="logEntries"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ==================== 背景 ====================
+const bgCanvas = document.getElementById('bgCanvas');
+const bgCtx = bgCanvas.getContext('2d');
+let bgW, bgH;
+function resizeBg() { bgW = bgCanvas.width = window.innerWidth; bgH = bgCanvas.height = window.innerHeight; }
+resizeBg(); window.addEventListener('resize', resizeBg);
+
+const HEX_SIZE = 28, hexPoints = [];
+let gridOffset = 0;
+(function gen() {
+  hexPoints.length = 0;
+  const w = HEX_SIZE * 1.5, h = HEX_SIZE * Math.sqrt(3);
+  for (let r = -1; r < Math.ceil(bgH / h) + 1; r++)
+    for (let c = -1; c < Math.ceil(bgW / w) + 1; c++)
+      hexPoints.push({ x: c * w + (r % 2 ? w / 2 : 0), y: r * h, r, c });
+})();
+
+function drawHex(ctx, x, y, size, alpha) {
+  ctx.beginPath();
+  for (let i = 0; i < 6; i++) {
+    const a = (Math.PI / 3) * i - Math.PI / 6;
+    (i === 0 ? ctx.moveTo : ctx.lineTo).call(ctx, x + size * Math.cos(a), y + size * Math.sin(a));
+  }
+  ctx.closePath(); ctx.strokeStyle = `rgba(249,115,22,${alpha})`; ctx.lineWidth = 0.5; ctx.stroke();
+}
+
+const dps = [];
+for (let i = 0; i < 60; i++) {
+  dps.push({
+    x: Math.random() * bgW, y: Math.random() * bgH, size: Math.random() * 1.5 + 0.5,
+    speed: Math.random() * 0.6 + 0.2, opacity: Math.random() * 0.5 + 0.15,
+    trail: [], maxTrail: Math.floor(Math.random() * 12) + 4,
+    color: Math.random() < 0.5 ? '249,115,22' : '0,212,255',
+  });
+}
+
+function drawBg() {
+  bgCtx.clearRect(0, 0, bgW, bgH);
+  gridOffset = (gridOffset + 0.06) % (HEX_SIZE * Math.sqrt(3));
+  for (const hp of hexPoints) {
+    const dy = (hp.y + gridOffset) % (bgH + HEX_SIZE * 3) - HEX_SIZE * 1.5;
+    if (dy < -HEX_SIZE || dy > bgH + HEX_SIZE) continue;
+    const a = 0.03 + 0.025 * Math.sin(hp.c * 0.5 + hp.r * 0.7);
+    if (a > 0.015) drawHex(bgCtx, hp.x, dy, HEX_SIZE * 0.85, a);
+  }
+  for (const p of dps) {
+    p.y += p.speed;
+    if (p.y > bgH + 20) { p.y = -20; p.x = Math.random() * bgW; p.trail = []; }
+    p.trail.push({ x: p.x, y: p.y, life: 1 });
+    if (p.trail.length > p.maxTrail) p.trail.shift();
+    for (const t of p.trail) {
+      t.life -= 0.06;
+      if (t.life > 0) {
+        bgCtx.beginPath(); bgCtx.arc(t.x, t.y, p.size * 0.7, 0, Math.PI * 2);
+        bgCtx.fillStyle = `rgba(${p.color},${t.life * p.opacity * 0.6})`; bgCtx.fill();
+      }
+    }
+    bgCtx.beginPath(); bgCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    bgCtx.fillStyle = `rgba(${p.color},${p.opacity})`; bgCtx.fill();
+    bgCtx.beginPath(); bgCtx.arc(p.x, p.y, p.size * 2.5, 0, Math.PI * 2);
+    bgCtx.fillStyle = `rgba(${p.color},${p.opacity * 0.12})`; bgCtx.fill();
+  }
+  for (let i = 0; i < dps.length; i++) {
+    for (let j = i + 1; j < dps.length; j++) {
+      const dx = dps[i].x - dps[j].x, dy = dps[i].y - dps[j].y, dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < 80) {
+        bgCtx.beginPath(); bgCtx.moveTo(dps[i].x, dps[i].y); bgCtx.lineTo(dps[j].x, dps[j].y);
+        bgCtx.strokeStyle = `rgba(249,115,22,${0.03 * (1 - dist / 80)})`; bgCtx.lineWidth = 0.5; bgCtx.stroke();
+      }
+    }
+  }
+  requestAnimationFrame(drawBg);
+}
+drawBg();
+
+// ==================== 数据定义 ====================
+// 10个区域法院，每区10个机器人 = 100
+const regions = [
+  { name: '北京地区法院', robots: 10, district: '京' },
+  { name: '上海地区法院', robots: 10, district: '沪' },
+  { name: '广东地区法院', robots: 10, district: '粤' },
+  { name: '浙江地区法院', robots: 10, district: '浙' },
+  { name: '江苏地区法院', robots: 10, district: '苏' },
+  { name: '四川地区法院', robots: 10, district: '川' },
+  { name: '湖北地区法院', robots: 10, district: '鄂' },
+  { name: '山东地区法院', robots: 10, district: '鲁' },
+  { name: '河南地区法院', robots: 10, district: '豫' },
+  { name: '福建地区法院', robots: 10, district: '闽' },
+];
+
+const debtTypes = [
+  '民间借贷纠纷', '消费金融欠款', '信用卡透支纠纷', '小额贷款追偿',
+  '赊购货款纠纷', '物业服务费欠缴', '租金拖欠纠纷', '劳务报酬追索',
+  '医疗费欠款纠纷', '网络借贷纠纷',
+];
+
+// 机器人名称生成
+const prefixes = ['天秤','法眼','智审','裁决','明镜','铁案','擎天','浩然','青天','正义'];
+
+function makeRobotName(regionIdx, robotIdx) {
+  const pre = prefixes[regionIdx % prefixes.length];
+  const id = String(robotIdx + 1).padStart(2, '0');
+  return regions[regionIdx].district + '-' + pre + '-' + id;
+}
+
+// 欠款纠纷AI思考步骤
+const thinkingStepsMap = {};
+debtTypes.forEach(type => {
+  thinkingStepsMap[type] = [
+    `读取${type}申请书及证据材料...`,
+    '核验借贷双方身份信息...',
+    '确认欠款金额（标的 < ¥10,000）...',
+    '审查诉讼时效（3年）及管辖权...',
+    '匹配《民法典》合同编/借款合同条款...',
+    '生成小额诉讼程序立案审查表...',
+    '推送至法院调解平台前置调解...',
+  ];
+});
+
+const caseColors = ['#f97316','#ef4444','#f59e0b','#84cc16','#06b6d4','#8b5cf6','#ec4899','#22c55e','#6366f1','#00d4ff'];
+
+// ==================== 机器人数据 ====================
+let robots = [];
+let totalEarnings = 0;
+let totalTasksCompleted = 0;
+let totalDebtAmount = 0;
+let totalTokensK = 0;       // 累计Token消耗（千）
+let tokenRateKPerMin = 0;   // Token消耗速率（千/分钟）
+let startTime = Date.now();
+let lastTokenTick = Date.now();
+let logEntries = [];
+let completionEntries = [];
+let selectedRobotId = null;
+let expandedRegions = new Set([0]); // 默认展开第一个区域
+
+// 为每个机器人分配欠款类型（均匀分布）
+const assignedDebtTypes = [];
+for (let i = 0; i < 100; i++) assignedDebtTypes.push(debtTypes[i % debtTypes.length]);
+
+// 随机欠款金额 (500 ~ 9,900)
+function randDebt() { return Math.floor(Math.random() * 9400 + 500); }
+
+let robotIdx = 0;
+regions.forEach((region, ri) => {
+  for (let j = 0; j < region.robots; j++) {
+    const name = makeRobotName(ri, j);
+    const debtAmt = randDebt();
+    const rand = Math.random();
+    let status;
+    if (rand < 0.78) status = 'working';
+    else if (rand < 0.94) status = 'done';
+    else status = 'standby';
+
+    const progress = status === 'done' ? 100 : (status === 'standby' ? 0 : Math.floor(Math.random() * 90) + 5);
+    const earned = status === 'done' ? 5 : (status === 'working' ? Math.floor(progress / 100 * 5 * 100) / 100 : 0);
+
+    if (status === 'done') { totalTasksCompleted++; totalDebtAmount += debtAmt; }
+    totalEarnings += earned;
+
+    robots.push({
+      id: robotIdx, name, region: ri, status, progress,
+      lastTaskTime: Date.now() - Math.random() * 20 * 60 * 1000,
+      earned, debtAmount: debtAmt, caseType: assignedDebtTypes[robotIdx],
+      caseCount: Math.floor(Math.random() * 8) + 1,
+      thinkingStep: Math.floor(Math.random() * 6),
+    });
+    robotIdx++;
+  }
+});
+totalEarnings = robots.reduce((s, r) => s + r.earned, 0) + 1250;
+
+function formatMoney(n) { return '¥' + n.toFixed(2); }
+function formatTime(ms) {
+  const s = Math.floor(ms / 1000);
+  return String(Math.floor(s / 3600)).padStart(2,'0') + ':' + String(Math.floor((s % 3600) / 60)).padStart(2,'0') + ':' + String(s % 60).padStart(2,'0');
+}
+
+// ==================== 流动窗口 ====================
+for (let i = 0; i < 80; i++) {
+  const h = Math.floor(Math.random() * 24), m = Math.floor(Math.random() * 60), s = Math.floor(Math.random() * 60);
+  const rn = makeRobotName(Math.floor(Math.random() * 10), Math.floor(Math.random() * 10));
+  completionEntries.push({
+    time: String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0'),
+    robot: rn, case: debtTypes[Math.floor(Math.random() * 10)],
+    amount: '¥' + (Math.floor(Math.random() * 9000 + 500)),
+    money: '+¥5.00', id: 'hist-' + i,
+  });
+}
+['天秤-A01','法眼-B03','智审-C07'].forEach((n, i) => {
+  completionEntries.push({ time: new Date().toTimeString().slice(0,8), robot: n, case: debtTypes[i], amount: '¥' + randDebt(), money: '+¥5.00', id: 'real-' + i });
+});
+
+function addCompletion(robotName, caseType, debtAmt) {
+  completionEntries.push({ time: new Date().toTimeString().slice(0,8), robot: robotName, case: caseType, amount: '¥' + debtAmt, money: '+¥5.00', id: 'c-' + Date.now() });
+  if (completionEntries.length > 200) completionEntries = completionEntries.slice(-200);
+  renderFeed();
+}
+function renderFeed() {
+  const html = completionEntries.map(e =>
+    `<div class="feed-item"><span class="fi-time">${e.time}</span><span class="fi-robot">${e.robot}</span><span class="fi-case">${e.case}</span><span class="fi-amount">${e.amount}</span><span class="fi-badge">完成</span><span class="fi-money">${e.money}</span></div>`
+  ).join('');
+  document.getElementById('feedScroll').innerHTML = html + html;
+}
+
+// ==================== 日志 ====================
+function addLog(robotName, caseType, debtAmt, earned) {
+  logEntries.unshift({ time: new Date().toTimeString().slice(0,8), msg: `<b>${robotName}</b> 追偿 ¥${debtAmt} · ${caseType}`, money: `+${formatMoney(earned)}` });
+  if (logEntries.length > 100) logEntries.length = 100;
+  renderLogs();
+}
+function renderLogs() {
+  document.getElementById('logEntries').innerHTML = logEntries.slice(0, 20).map(l =>
+    `<div class="log-entry"><span class="time">${l.time}</span><span class="msg">${l.msg}</span><span class="money">${l.money}</span></div>`
+  ).join('');
+}
+
+// ==================== 即将完成 ====================
+function renderQueue() {
+  document.getElementById('queueEntries').innerHTML = robots
+    .filter(r => r.status === 'working').sort((a, b) => b.progress - a.progress).slice(0, 12)
+    .map(r => `<div class="tq-item"><span class="tq-name">${r.name}</span><span class="tq-case">¥${r.debtAmount} ${r.caseType}</span><span class="tq-prog">${r.progress}%</span></div>`).join('');
+}
+
+// ==================== 饼图 ====================
+function drawPieChart() {
+  const pc = document.getElementById('pieCanvas'), pctx = pc.getContext('2d');
+  const cx = 65, cy = 65, outerR = 55, innerR = 32;
+  const counts = {};
+  robots.forEach(r => { counts[r.caseType] = (counts[r.caseType] || 0) + 1; });
+  const total = robots.length;
+  const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+
+  pctx.clearRect(0, 0, 130, 130);
+  let angle = -Math.PI / 2;
+  entries.forEach(([type, count], i) => {
+    const sa = (count / total) * Math.PI * 2;
+    pctx.beginPath(); pctx.arc(cx, cy, outerR, angle, angle + sa); pctx.arc(cx, cy, innerR, angle + sa, angle, true); pctx.closePath();
+    pctx.fillStyle = caseColors[i % caseColors.length]; pctx.fill();
+    const ma = angle + sa / 2;
+    pctx.fillStyle = caseColors[i % caseColors.length];
+    pctx.font = 'bold 7px "PingFang SC","Microsoft YaHei",monospace';
+    pctx.textAlign = ma > Math.PI / 2 && ma < Math.PI * 1.5 ? 'right' : 'left';
+    pctx.fillText(type.slice(0, 3) + ' ' + Math.round(count / total * 100) + '%', cx + Math.cos(ma) * (outerR + 6), cy + Math.sin(ma) * (outerR + 6) + 2);
+    angle += sa;
+  });
+  pctx.fillStyle = '#e2e8f0'; pctx.font = 'bold 13px "Courier New",monospace'; pctx.textAlign = 'center';
+  pctx.fillText(total, cx, cy - 2);
+  pctx.fillStyle = '#8899b4'; pctx.font = '7px "PingFang SC","Microsoft YaHei",monospace';
+  pctx.fillText('总案件', cx, cy + 12);
+
+  document.getElementById('pieLegend').innerHTML = entries.map(([type, count], i) =>
+    `<div class="item"><span><span class="swatch" style="background:${caseColors[i % caseColors.length]}"></span>${type}</span><span class="pct">${count}<span style="color:#475569;font-weight:400">/${total}</span></span></div>`
+  ).join('');
+}
+
+// ==================== 区域分组渲染 ====================
+function renderRegions() {
+  const sm = { working: { cls: 'working', txt: '工作中', sCls: 's-working', dot: '#00ff88' }, done: { cls: 'done', txt: '已完结', sCls: 's-done', dot: '#f59e0b' }, standby: { cls: 'standby', txt: '待命', sCls: 's-standby', dot: '#64748b' } };
+
+  const html = regions.map((region, ri) => {
+    const regionRobots = robots.filter(r => r.region === ri);
+    const working = regionRobots.filter(r => r.status === 'working');
+    const done = regionRobots.filter(r => r.status === 'done');
+    const standby = regionRobots.filter(r => r.status === 'standby');
+    const totalDebt = regionRobots.reduce((s, r) => s + r.debtAmount, 0);
+    const isExpanded = expandedRegions.has(ri);
+
+    const robotsHTML = regionRobots.map(r => {
+      const s = sm[r.status];
+      const eta = r.status === 'working' ? Math.max(0, 20 - Math.floor(r.progress / 100 * 20)) + 'min' : r.status === 'done' ? '完结' : '—';
+      return `<div class="robot-card ${s.cls}${r.id === selectedRobotId ? ' selected' : ''}" data-id="${r.id}" onclick="selectRobot(${r.id})">
+        <div class="r-header"><span class="r-name">${r.name}</span><span class="r-status ${s.sCls}">${s.txt}</span></div>
+        <div class="r-amount">欠款：<b>¥${r.debtAmount}</b> | ${r.caseType}</div>
+        <div class="r-progress"><div class="r-progress-bar" style="width:${r.progress}%"></div></div>
+        <div class="r-meta"><span>⏱ ${eta}</span><span>${r.progress}%</span><span class="earned">${formatMoney(r.earned)}</span></div>
+      </div>`;
+    }).join('');
+
+    return `<div class="region-group${isExpanded ? ' expanded' : ''}" id="region-${ri}">
+      <div class="region-header" onclick="toggleRegion(${ri})">
+        <div class="expand-icon">▸</div>
+        <span class="region-name">🏛 ${region.name}</span>
+        <span class="region-total-debt">累计欠款 ¥${totalDebt.toLocaleString()}</span>
+        <div class="region-stats">
+          <span><span class="rs-dot" style="background:#00ff88;box-shadow:0 0 4px #00ff88"></span>${working.length}工作</span>
+          <span><span class="rs-dot" style="background:#f59e0b"></span>${done.length}完结</span>
+          <span><span class="rs-dot" style="background:#64748b"></span>${standby.length}待命</span>
+        </div>
+      </div>
+      <div class="region-body">
+        <div class="region-robots">${robotsHTML}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('centerPanel').innerHTML = html;
+  rebindCards();
+}
+
+function toggleRegion(ri) {
+  if (expandedRegions.has(ri)) expandedRegions.delete(ri);
+  else expandedRegions.add(ri);
+  renderRegions();
+  // 保持已选机器人
+  if (selectedRobotId !== null) {
+    const el = document.querySelector(`.robot-card[data-id="${selectedRobotId}"]`);
+    if (el) el.classList.add('selected');
+  }
+}
+
+// ==================== 详情面板 ====================
+function selectRobot(id) {
+  selectedRobotId = id;
+  renderRegions();
+  renderDetailPanel(id);
+  // 自动展开对应区域
+  const r = robots.find(r => r.id === id);
+  if (r && !expandedRegions.has(r.region)) {
+    expandedRegions.add(r.region);
+    renderRegions();
+    const el = document.querySelector(`.robot-card[data-id="${id}"]`);
+    if (el) el.classList.add('selected');
+  }
+}
+
+function renderDetailPanel(id) {
+  const r = robots.find(r => r.id === id);
+  if (!r) return;
+  const steps = thinkingStepsMap[r.caseType] || thinkingStepsMap[debtTypes[0]];
+  const sm = { working: '工作中', done: '已完结', standby: '待命' };
+  const sc = { working: '#00ff88', done: '#fbbf24', standby: '#9ca3af' };
+  const remaining = r.status === 'working' ? Math.max(0, Math.ceil((100 - r.progress) / 100 * 20)) : 0;
+  const regionName = regions[r.region] ? regions[r.region].name : '';
+
+  document.getElementById('detailCard').innerHTML = `
+    <h4>▣ 机器人详情</h4>
+    <div class="robot-title">${r.name}</div>
+    <div class="robot-subtitle" style="color:${sc[r.status]}">● ${sm[r.status]} · ${r.caseType}</div>
+    <div class="detail-row"><span class="dl">所属法院</span><span class="dv">${regionName}</span></div>
+    <div class="detail-row"><span class="dl">欠款金额</span><span class="dv debt-highlight">¥${r.debtAmount}</span></div>
+    <div class="detail-row"><span class="dl">欠款类型</span><span class="dv">${r.caseType}</span></div>
+    <div class="detail-row"><span class="dl">案件序号</span><span class="dv">第 ${r.caseCount} 件</span></div>
+    <div class="detail-row"><span class="dl">任务进度</span><span class="dv">${r.progress}%</span></div>
+    <div class="detail-row"><span class="dl">预计剩余</span><span class="dv">${r.status === 'working' ? remaining + ' 分钟' : '—'}</span></div>
+    <div class="detail-row"><span class="dl">累计收益</span><span class="dv" style="color:#00ff88">${formatMoney(r.earned)}</span></div>
+    <div class="detail-row"><span class="dl">耗时总计</span><span class="dv">${r.caseCount * 20} 分钟</span></div>
+    <div class="thinking-section">
+      <div class="section-label"><span class="brain-pulse"></span>AI 思考过程</div>
+      ${steps.map((step, i) => {
+        let cls = '', icon = '○';
+        if (i < r.thinkingStep) { cls = 'done'; icon = '✓'; }
+        else if (i === r.thinkingStep && r.status === 'working') { cls = 'active'; icon = '▸'; }
+        return `<div class="think-step ${cls}"><span class="step-icon">${icon}</span>${step}</div>`;
+      }).join('')}
+    </div>`;
+}
+
+function rebindCards() {
+  document.querySelectorAll('.robot-card').forEach(c => {
+    c.addEventListener('click', function(e) { e.stopPropagation(); selectRobot(parseInt(this.dataset.id)); });
+  });
+}
+
+// ==================== 统计 ====================
+function updateStats() {
+  const w = robots.filter(r => r.status === 'working');
+  const d = robots.filter(r => r.status === 'done');
+  const sb = robots.filter(r => r.status === 'standby');
+  const totalDebtAll = robots.reduce((s, r) => s + r.debtAmount, 0);
+  const avgDebt = robots.length > 0 ? Math.round(totalDebtAll / robots.length) : 0;
+
+  // Token消耗：每个工作中的机器人 ~1.8K tokens/分钟
+  const now = Date.now();
+  const elapsedMin = (now - lastTokenTick) / 60000;
+  if (elapsedMin >= 0.1 && w.length > 0) {
+    const newTokens = w.length * 1.8 * elapsedMin;
+    totalTokensK += newTokens;
+    tokenRateKPerMin = Math.round(w.length * 1.8 * 10) / 10;
+    lastTokenTick = now;
+  } else if (w.length === 0) {
+    tokenRateKPerMin = 0;
+  }
+  // 为已在done的机器人补一点初始token
+  if (totalTokensK < 100) totalTokensK = 120 + Math.random() * 30;
+
+  document.getElementById('hourlyRate').textContent = '¥' + w.length * 3 * 5;
+  document.getElementById('totalEarnings').textContent = formatMoney(totalEarnings);
+  document.getElementById('totalTasksSmall').textContent = totalTasksCompleted + ' 个任务';
+  document.getElementById('totalTasks').textContent = totalTasksCompleted;
+  document.getElementById('cntWorking').textContent = w.length;
+  document.getElementById('cntDone').textContent = d.length;
+  document.getElementById('cntStandby').textContent = sb.length;
+  document.getElementById('uptime').textContent = formatTime(Date.now() - startTime);
+  document.getElementById('casesFiled').textContent = totalTasksCompleted;
+  document.getElementById('totalDebt').textContent = '¥' + totalDebtAll.toLocaleString();
+  document.getElementById('avgDebt').textContent = '¥' + avgDebt.toLocaleString();
+  document.getElementById('tokenRate').textContent = tokenRateKPerMin.toFixed(1);
+  document.getElementById('totalTokens').textContent = Math.round(totalTokensK);
+}
+
+// ==================== 主循环 ====================
+function tick() {
+  const now = Date.now();
+  robots.forEach(r => {
+    if (r.status !== 'working') return;
+    const dur = 20 * 60 * 1000, elapsed = now - r.lastTaskTime;
+    r.progress = Math.min(100, Math.floor((elapsed / dur) * 100));
+    const ns = Math.min(6, Math.floor((elapsed / dur) * 7));
+    if (ns !== r.thinkingStep) { r.thinkingStep = ns; if (r.id === selectedRobotId) renderDetailPanel(r.id); }
+    if (elapsed >= dur) {
+      r.earned += 5; totalEarnings += 5; totalTasksCompleted++; totalDebtAmount += r.debtAmount;
+      r.progress = 0; r.thinkingStep = 0; r.lastTaskTime = now;
+      r.caseType = debtTypes[Math.floor(Math.random() * debtTypes.length)];
+      r.debtAmount = randDebt(); r.caseCount++;
+      addLog(r.name, r.caseType, r.debtAmount, 5);
+      addCompletion(r.name, r.caseType, r.debtAmount);
+      const card = document.querySelector(`.robot-card[data-id="${r.id}"]`);
+      if (card) { card.classList.add('flash'); setTimeout(() => card.classList.remove('flash'), 500); }
+      const sr = Math.random();
+      if (sr < 0.05) { r.status = 'done'; r.progress = 100; r.thinkingStep = 7; }
+      else if (sr < 0.07) { r.status = 'standby'; r.progress = 0; r.thinkingStep = 0; }
+      if (r.id === selectedRobotId) renderDetailPanel(r.id);
+    }
+  });
+  robots.forEach(r => {
+    if (r.status === 'standby' && Math.random() < 0.05) { r.status = 'working'; r.progress = 0; r.thinkingStep = 0; r.lastTaskTime = now; r.caseType = debtTypes[Math.floor(Math.random() * debtTypes.length)]; r.debtAmount = randDebt(); }
+  });
+  renderRegions(); updateStats(); drawPieChart(); renderQueue();
+}
+
+// ==================== 启动 ====================
+renderFeed(); renderRegions(); updateStats(); drawPieChart(); renderLogs(); renderQueue();
+selectRobot(0);
+setInterval(tick, 1000); tick();
+</script>
+</body>
+</html>
