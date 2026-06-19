@@ -2,7 +2,10 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>新华商数字（深圳）科技有限公司 — AI 批量立案监控平台</title>
 <meta name="description" content="AI 批量立案监控平台 · 智能案卷处理 · 10个区域法院100个AI机器人在线">
 <!-- Open Graph (QQ/微信/社交平台通用) -->
@@ -294,7 +297,7 @@
     .main-content { flex-direction:column; }
     .left-panel { width:100%; flex-direction:row; gap:6px; min-height:auto; }
     .left-panel .panel-card { flex:0 0 auto; }
-    .completion-feed { height:90px; }
+    .completion-feed { flex:0 0 80px; height:80px; }
     .right-panel { width:100%; flex-direction:row; gap:6px; }
     .right-panel .detail-card { flex:1; min-width:0; }
     .right-panel .task-queue { flex:0 0 160px; height:auto; }
@@ -331,11 +334,15 @@
     .left-panel .panel-card { flex:unset; }
     .pie-wrap { width:100px; height:100px; }
     .pie-wrap canvas { width:100px; height:100px; }
-    .completion-feed { height:65px; }
-    .feed-item { font-size:8px; padding:1px 8px; gap:1px 4px; }
+    .completion-feed { height:50px; }
+    .completion-feed .feed-header { display:none; }
+    .feed-item { font-size:7px; padding:1px 8px; gap:1px 3px; white-space:nowrap; }
     .feed-item .fi-case { display:none; }
     .feed-item .fi-amount { display:none; }
     .feed-item .fi-badge { display:none; }
+    .feed-item .fi-time { font-size:7px; min-width:45px; }
+    .feed-item .fi-robot { font-size:7px; max-width:60px; overflow:hidden; text-overflow:ellipsis; }
+    .feed-item .fi-money { font-size:7px; }
     .center-panel { overflow-y:auto; }
     .region-header { padding:8px 10px; gap:5px; }
     .region-header .region-name { font-size:11px; }
@@ -399,15 +406,15 @@
     .pie-wrap { width:80px; height:80px; }
     .pie-wrap canvas { width:80px; height:80px; }
     .pie-legend .item { font-size:8px; }
-    .completion-feed { height:52px; }
-    .feed-header { padding:4px 8px; display:none; }
-    .feed-item { font-size:7px; padding:1px 5px; gap:1px 3px; }
+    .completion-feed { height:40px; }
+    .feed-header { display:none; }
+    .feed-item { font-size:7px; padding:0px 5px; gap:1px 3px; white-space:nowrap; flex-wrap:nowrap; }
     .feed-item .fi-case { display:none; }
     .feed-item .fi-amount { display:none; }
     .feed-item .fi-badge { display:none; }
-    .feed-item .fi-time { font-size:7px; }
-    .feed-item .fi-robot { font-size:7px; max-width:55px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    .feed-item .fi-money { font-size:7px; }
+    .feed-item .fi-time { font-size:6px; min-width:40px; }
+    .feed-item .fi-robot { font-size:7px; max-width:50px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .feed-item .fi-money { font-size:7px; margin-left:auto; }
     .region-header { padding:6px 8px; }
     .region-header .expand-icon { width:16px; height:16px; font-size:10px; }
     .region-header .region-name { font-size:10px; }
