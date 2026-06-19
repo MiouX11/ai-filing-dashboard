@@ -294,7 +294,7 @@
     .main-content { flex-direction:column; }
     .left-panel { width:100%; flex-direction:row; gap:6px; min-height:auto; }
     .left-panel .panel-card { flex:0 0 auto; }
-    .completion-feed { flex:1; height:110px; }
+    .completion-feed { height:90px; }
     .right-panel { width:100%; flex-direction:row; gap:6px; }
     .right-panel .detail-card { flex:1; min-width:0; }
     .right-panel .task-queue { flex:0 0 160px; height:auto; }
@@ -331,11 +331,11 @@
     .left-panel .panel-card { flex:unset; }
     .pie-wrap { width:100px; height:100px; }
     .pie-wrap canvas { width:100px; height:100px; }
-    .completion-feed { height:85px; }
-    .feed-item { font-size:8px; padding:2px 8px; gap:1px 5px; }
+    .completion-feed { height:65px; }
+    .feed-item { font-size:8px; padding:1px 8px; gap:1px 4px; }
+    .feed-item .fi-case { display:none; }
     .feed-item .fi-amount { display:none; }
     .feed-item .fi-badge { display:none; }
-    .feed-item .fi-case { max-width:40px; }
     .center-panel { overflow-y:auto; }
     .region-header { padding:8px 10px; gap:5px; }
     .region-header .region-name { font-size:11px; }
@@ -399,16 +399,15 @@
     .pie-wrap { width:80px; height:80px; }
     .pie-wrap canvas { width:80px; height:80px; }
     .pie-legend .item { font-size:8px; }
-    .completion-feed { height:75px; }
-    .feed-item { font-size:7px; padding:2px 5px; gap:1px 4px; }
+    .completion-feed { height:52px; }
+    .feed-header { padding:4px 8px; display:none; }
+    .feed-item { font-size:7px; padding:1px 5px; gap:1px 3px; }
+    .feed-item .fi-case { display:none; }
     .feed-item .fi-amount { display:none; }
     .feed-item .fi-badge { display:none; }
-    .feed-item .fi-case { max-width:35px; }
     .feed-item .fi-time { font-size:7px; }
-    .feed-item .fi-robot { font-size:7px; }
+    .feed-item .fi-robot { font-size:7px; max-width:55px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     .feed-item .fi-money { font-size:7px; }
-    .feed-header { padding:5px 8px; }
-    .feed-header h4 { font-size:9px; }
     .region-header { padding:6px 8px; }
     .region-header .expand-icon { width:16px; height:16px; font-size:10px; }
     .region-header .region-name { font-size:10px; }
