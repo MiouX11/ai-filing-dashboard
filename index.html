@@ -41,7 +41,7 @@
   }
   @keyframes scanDown { 0%{top:0} 100%{top:100%} }
 
-  .app { position:relative; z-index:2; max-width:1720px; margin:0 auto; padding:12px 16px; height:100vh; display:flex; flex-direction:column; }
+  .app { position:relative; z-index:2; max-width:1720px; margin:0 auto; padding:12px 16px; min-height:100vh; display:flex; flex-direction:column; }
 
   /* ====== 顶部栏 ====== */
   .header {
@@ -266,13 +266,153 @@
   ::-webkit-scrollbar-track { background:transparent; }
   ::-webkit-scrollbar-thumb { background:rgba(249,115,22,0.15); border-radius:2px; }
 
+  /* ================================================ */
+  /*                 📱 手机端适配                        */
+  /* ================================================ */
+
+  /* -- 中等屏幕 (平板/小笔记本) -- */
   @media (max-width:1200px) {
+    .app { padding:6px 8px; }
+    .header { flex-wrap:wrap; gap:8px; padding:8px 12px; }
+    .header-center { display:none; }
+    .header-right { flex-wrap:wrap; gap:6px; }
+    .earn-box, .token-box { padding:6px 10px; }
+    .earn-box .amount, .token-box .amount { font-size:16px; }
+    .status-dots { width:100%; justify-content:center; font-size:9px; }
+    .stats-bar { flex-wrap:wrap; gap:4px; }
+    .stat-card { min-width:calc(33% - 4px); }
     .main-content { flex-direction:column; }
-    .left-panel { width:100%; flex-direction:row; }
-    .left-panel .panel-card { flex:1; }
-    .completion-feed { height:140px; }
-    .right-panel { width:100%; }
-    .task-queue { height:120px; }
+    .left-panel { width:100%; flex-direction:row; gap:6px; min-height:auto; }
+    .left-panel .panel-card { flex:0 0 auto; }
+    .completion-feed { flex:1; height:140px; }
+    .right-panel { width:100%; flex-direction:row; gap:6px; }
+    .right-panel .detail-card { flex:1; min-width:0; }
+    .right-panel .task-queue { flex:0 0 160px; height:auto; }
+    .bottom-area { margin-top:6px; }
+    .log-panel { max-height:70px; }
+    .region-header { flex-wrap:wrap; gap:6px; }
+    .region-header .region-total-debt { margin-left:0; }
+    .region-robots { grid-template-columns:repeat(auto-fill, minmax(120px, 1fr)); }
+  }
+
+  /* -- 手机 (横屏/大屏手机) -- */
+  @media (max-width:768px) {
+    .app { padding:4px 5px; }
+    /* 移动端 vh 修复 */
+    .app { min-height:100dvh; }
+    .header { padding:6px 10px; border-radius:7px; margin-bottom:5px; }
+    .header-left { gap:6px; }
+    .logo { width:32px; height:32px; border-radius:5px; }
+    .logo svg { width:17px; height:17px; }
+    .title-group h1 { font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:200px; }
+    .title-group .sub { font-size:8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:200px; }
+    .earn-box, .token-box { padding:5px 8px; border-radius:6px; }
+    .earn-box .label, .token-box .label { font-size:7px; }
+    .earn-box .amount, .token-box .amount { font-size:14px; }
+    .earn-box .rate, .token-box .rate { font-size:7px; }
+    .status-dots { gap:8px; font-size:8px; }
+    .stats-bar { gap:3px; margin-bottom:4px; }
+    .stat-card { min-width:calc(50% - 3px); padding:6px 8px; border-radius:7px; }
+    .stat-card .icon { width:24px; height:24px; font-size:12px; }
+    .stat-card .info .n { font-size:16px; }
+    .stat-card .info .l { font-size:7px; }
+    .main-content { gap:5px; }
+    .left-panel { flex-direction:column; width:100%; gap:5px; }
+    .left-panel .panel-card { flex:unset; }
+    .pie-wrap { width:100px; height:100px; }
+    .pie-wrap canvas { width:100px; height:100px; }
+    .completion-feed { height:120px; }
+    .feed-item { font-size:8px; padding:3px 8px; }
+    .center-panel { overflow-y:auto; }
+    .region-header { padding:8px 10px; gap:5px; }
+    .region-header .region-name { font-size:11px; }
+    .region-header .region-stats { font-size:8px; gap:6px; margin-left:0; }
+    .region-header .region-total-debt { font-size:9px; width:100%; }
+    .region-body { padding:0 6px 6px 6px; }
+    .region-robots { grid-template-columns:repeat(auto-fill, minmax(105px, 1fr)); gap:4px; }
+    .robot-card { padding:6px; border-radius:6px; }
+    .robot-card .r-name { font-size:9px; }
+    .robot-card .r-status { font-size:6px; }
+    .robot-card .r-amount { font-size:7px; }
+    .robot-card .r-meta { font-size:7px; }
+    .robot-card:hover { transform:none; }
+    .right-panel { flex-direction:column; width:100%; gap:5px; }
+    .right-panel .task-queue { flex:unset; height:auto; max-height:140px; }
+    .detail-card { padding:8px 10px; }
+    .detail-card h4 { font-size:10px; margin-bottom:6px; }
+    .robot-title { font-size:16px; }
+    .detail-row { font-size:8px; padding:3px 0; }
+    .debt-highlight { font-size:11px !important; }
+    .think-step { font-size:7px; padding:4px 6px; }
+    .bottom-area { margin-top:5px; }
+    .log-panel { padding:5px 8px; max-height:65px; border-radius:7px; }
+    .log-panel h4 { font-size:9px; }
+    .log-entry { font-size:7px; }
+    .task-queue { padding:6px 8px; border-radius:7px; }
+    .task-queue h4 { font-size:9px; }
+    .tq-item { font-size:7px; }
+    /* 触摸设备隐藏 hover 效果 */
+    @media (hover:none) {
+      .robot-card:hover { transform:none; border-color:var(--border); box-shadow:none; }
+      .region-header:hover { background:transparent; }
+      .stat-card:hover { border-color:var(--border); box-shadow:none; }
+      .feed-item:hover { background:transparent; }
+    }
+  }
+
+  /* -- 小屏手机 -- */
+  @media (max-width:480px) {
+    .app { padding:3px; }
+    .header { padding:5px 8px; border-radius:6px; margin-bottom:4px; flex-wrap:wrap; }
+    .header-left { width:100%; justify-content:space-between; }
+    .logo { width:28px; height:28px; }
+    .logo svg { width:15px; height:15px; }
+    .title-group { flex:1; min-width:0; }
+    .title-group h1 { font-size:12px; max-width:160px; }
+    .title-group .sub { display:none; }
+    .header-right { width:100%; justify-content:space-between; gap:4px; }
+    .earn-box, .token-box { flex:1; padding:4px 6px; text-align:center; }
+    .earn-box .amount, .token-box .amount { font-size:13px; }
+    .status-dots { width:100%; justify-content:space-around; font-size:7px; gap:4px; }
+    .stats-bar { flex-wrap:wrap; gap:3px; }
+    .stat-card { min-width:calc(50% - 2px); padding:5px 6px; border-radius:6px; flex:1 1 calc(50% - 3px); }
+    .stat-card:nth-child(5) { flex:1 1 100%; }
+    .stat-card .icon { width:22px; height:22px; font-size:11px; border-radius:4px; }
+    .stat-card .info .n { font-size:14px; }
+    .stat-card .info .l { font-size:7px; }
+    .left-panel { gap:4px; }
+    .panel-card { padding:7px 8px; border-radius:7px; }
+    .panel-card h4 { font-size:9px; margin-bottom:4px; }
+    .pie-wrap { width:80px; height:80px; }
+    .pie-wrap canvas { width:80px; height:80px; }
+    .pie-legend .item { font-size:8px; }
+    .completion-feed { height:100px; }
+    .feed-item { font-size:7px; padding:2px 6px; gap:1px 4px; }
+    .feed-header { padding:5px 8px; }
+    .feed-header h4 { font-size:9px; }
+    .region-header { padding:6px 8px; }
+    .region-header .expand-icon { width:16px; height:16px; font-size:10px; }
+    .region-header .region-name { font-size:10px; }
+    .region-header .region-stats { font-size:7px; gap:4px; }
+    .region-header .region-total-debt { font-size:8px; }
+    .region-robots { grid-template-columns:repeat(auto-fill, minmax(90px, 1fr)); gap:3px; }
+    .robot-card { padding:5px; border-radius:5px; }
+    .robot-card .r-name { font-size:8px; }
+    .robot-card .r-amount { font-size:7px; margin:2px 0; }
+    .robot-card .r-meta { font-size:6px; }
+    .right-panel { gap:4px; }
+    .detail-card { padding:6px 8px; border-radius:7px; }
+    .detail-card h4 { font-size:9px; margin-bottom:4px; }
+    .robot-title { font-size:14px; }
+    .robot-subtitle { font-size:8px; margin-bottom:6px; }
+    .detail-row { font-size:7px; padding:2px 0; }
+    .debt-highlight { font-size:10px !important; }
+    .section-label { font-size:7px; }
+    .think-step { font-size:7px; padding:3px 5px; }
+    .task-queue { padding:5px 6px; max-height:110px; }
+    .log-panel { max-height:55px; padding:4px 6px; border-radius:7px; }
+    .log-panel h4 { font-size:8px; margin-bottom:2px; }
+    .log-entry { font-size:6px; }
   }
 </style>
 </head>
@@ -345,8 +485,10 @@
         <div class="pie-legend" id="pieLegend"></div>
       </div>
       <div class="completion-feed" id="completionFeed"
-           onmouseenter="document.querySelector('.feed-scroll').classList.add('paused')"
-           onmouseleave="document.querySelector('.feed-scroll').classList.remove('paused')">
+           onmouseenter="this.querySelector('.feed-scroll').classList.add('paused')"
+           onmouseleave="this.querySelector('.feed-scroll').classList.remove('paused')"
+           ontouchstart="this.querySelector('.feed-scroll').classList.add('paused')"
+           ontouchend="setTimeout(()=>{this.querySelector('.feed-scroll').classList.remove('paused')},2500)">
         <div class="feed-header"><h4><span class="flow-indicator"></span>完成状态 · 实时滚动</h4></div>
         <div class="feed-body"><div class="feed-scroll" id="feedScroll"></div></div>
       </div>
@@ -403,8 +545,10 @@ function drawHex(ctx, x, y, size, alpha) {
   ctx.closePath(); ctx.strokeStyle = `rgba(249,115,22,${alpha})`; ctx.lineWidth = 0.5; ctx.stroke();
 }
 
+const isMobile = window.innerWidth < 768;
 const dps = [];
-for (let i = 0; i < 60; i++) {
+const particleCount = isMobile ? 20 : 60;
+for (let i = 0; i < particleCount; i++) {
   dps.push({
     x: Math.random() * bgW, y: Math.random() * bgH, size: Math.random() * 1.5 + 0.5,
     speed: Math.random() * 0.6 + 0.2, opacity: Math.random() * 0.5 + 0.15,
@@ -413,14 +557,21 @@ for (let i = 0; i < 60; i++) {
   });
 }
 
-function drawBg() {
+let lastBgDraw = 0;
+function drawBg(ts) {
+  // 移动端降低帧率
+  if (isMobile && ts - lastBgDraw < 80) { requestAnimationFrame(drawBg); return; }
+  lastBgDraw = ts;
   bgCtx.clearRect(0, 0, bgW, bgH);
   gridOffset = (gridOffset + 0.06) % (HEX_SIZE * Math.sqrt(3));
-  for (const hp of hexPoints) {
-    const dy = (hp.y + gridOffset) % (bgH + HEX_SIZE * 3) - HEX_SIZE * 1.5;
-    if (dy < -HEX_SIZE || dy > bgH + HEX_SIZE) continue;
-    const a = 0.03 + 0.025 * Math.sin(hp.c * 0.5 + hp.r * 0.7);
-    if (a > 0.015) drawHex(bgCtx, hp.x, dy, HEX_SIZE * 0.85, a);
+  // 移动端减少六边形渲染
+  if (!isMobile) {
+    for (const hp of hexPoints) {
+      const dy = (hp.y + gridOffset) % (bgH + HEX_SIZE * 3) - HEX_SIZE * 1.5;
+      if (dy < -HEX_SIZE || dy > bgH + HEX_SIZE) continue;
+      const a = 0.03 + 0.025 * Math.sin(hp.c * 0.5 + hp.r * 0.7);
+      if (a > 0.015) drawHex(bgCtx, hp.x, dy, HEX_SIZE * 0.85, a);
+    }
   }
   for (const p of dps) {
     p.y += p.speed;
@@ -450,7 +601,7 @@ function drawBg() {
   }
   requestAnimationFrame(drawBg);
 }
-drawBg();
+requestAnimationFrame(drawBg);
 
 // ==================== 数据定义 ====================
 // 10个区域法院，每区10个机器人 = 100
