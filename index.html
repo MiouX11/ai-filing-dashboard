@@ -52,7 +52,7 @@
   }
   @keyframes scanDown { 0%{top:0} 100%{top:100%} }
 
-  .app { position:relative; z-index:2; max-width:2560px; margin:0 auto; padding:16px 24px; min-height:100vh; display:flex; flex-direction:column; }
+  .app { position:relative; z-index:2; max-width:2560px; margin:0 auto; padding:10px 20px; height:100vh; display:flex; flex-direction:column; overflow:hidden; }
 
   /* ====== 顶部栏 ====== */
   .header {
@@ -129,28 +129,28 @@
   .pie-legend .item .pct { color:var(--text); font-weight:600; font-family:'Courier New',monospace; }
 
   .completion-feed {
-    flex:1; min-height:0;
+    flex:0 0 104px; height:104px; min-height:0;
     background:rgba(13,21,37,0.9); border:1px solid var(--border);
     padding:0;
     display:flex; flex-direction:column;
     position:relative; overflow:hidden;
   }
   .completion-feed::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,var(--work),transparent); z-index:1; opacity:0.5; }
-  .completion-feed .feed-header { padding:7px 11px; display:flex; align-items:center; gap:6px; border-bottom:1px solid var(--border); background:rgba(0,255,136,0.02); flex-shrink:0; }
-  .completion-feed .feed-header h4 { font-size:10px; color:var(--text-dim); display:flex; align-items:center; gap:5px; margin:0; }
-  .flow-indicator { width:6px; height:6px; background:var(--work); border-radius:50%; animation:dotPulse 1s infinite; }
+  .completion-feed .feed-header { padding:5px 11px; display:flex; align-items:center; gap:6px; border-bottom:1px solid var(--border); background:rgba(0,255,136,0.02); flex-shrink:0; }
+  .completion-feed .feed-header h4 { font-size:9px; color:var(--text-dim); display:flex; align-items:center; gap:5px; margin:0; }
+  .flow-indicator { width:5px; height:5px; background:var(--work); border-radius:50%; animation:dotPulse 1s infinite; }
   .completion-feed .feed-body { flex:1; overflow:hidden; position:relative; }
-  .completion-feed .feed-scroll { animation:scrollUp 35s linear infinite; }
+  .completion-feed .feed-scroll { animation:scrollUp 18s linear infinite; }
   .completion-feed .feed-scroll.paused { animation-play-state:paused; }
   @keyframes scrollUp { 0%{transform:translateY(0)} 100%{transform:translateY(-50%)} }
-  .feed-item { display:flex; align-items:center; flex-wrap:wrap; gap:2px 6px; padding:4px 11px; font-size:9px; border-bottom:1px solid rgba(255,255,255,0.02); transition:background 0.3s; cursor:default; }
+  .feed-item { display:flex; align-items:center; flex-wrap:nowrap; gap:2px 5px; padding:2.5px 11px; font-size:8px; border-bottom:1px solid rgba(255,255,255,0.02); transition:background 0.3s; cursor:default; }
   .feed-item:hover { background:rgba(249,115,22,0.05); }
-  .feed-item .fi-time { color:#475569; font-family:'Courier New',monospace; font-size:8px; }
-  .feed-item .fi-robot { color:var(--debt); font-family:'Courier New',monospace; font-weight:600; }
-  .feed-item .fi-case { color:var(--text-dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:50px; }
-  .feed-item .fi-amount { color:#fbbf24; font-size:8px; }
-  .feed-item .fi-badge { font-size:7px; padding:1px 5px; background:rgba(0,255,136,0.1); color:#00ff88; }
-  .feed-item .fi-money { color:var(--work); font-weight:700; font-family:'Courier New',monospace; margin-left:auto; }
+  .feed-item .fi-time { color:#475569; font-family:'Courier New',monospace; font-size:7px; min-width:48px; }
+  .feed-item .fi-robot { color:var(--debt); font-family:'Courier New',monospace; font-weight:600; font-size:8px; }
+  .feed-item .fi-case { color:var(--text-dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:40px; font-size:7px; }
+  .feed-item .fi-amount { color:#fbbf24; font-size:7px; }
+  .feed-item .fi-badge { font-size:6px; padding:1px 4px; background:rgba(0,255,136,0.1); color:#00ff88; }
+  .feed-item .fi-money { color:var(--work); font-weight:700; font-family:'Courier New',monospace; margin-left:auto; font-size:8px; }
 
   /* ---- 中间面板：AI实时思考过程（核心展示区）---- */
   .center-panel { flex:1; display:flex; flex-direction:column; min-width:0; gap:8px; overflow-y:auto; padding-right:4px; }
@@ -685,7 +685,7 @@
     .main-content { flex-direction:column; }
     .left-panel { width:100%; flex-direction:row; gap:6px; min-height:auto; }
     .left-panel .panel-card { flex:0 0 auto; }
-    .completion-feed { flex:0 0 80px; height:80px; }
+    .completion-feed { flex:0 0 72px; height:72px; }
     .center-panel { max-height:400px; }
     .right-panel { width:100%; flex-direction:column; gap:6px; }
     .thinking-stage .ts-body { max-height:250px; }
@@ -720,7 +720,7 @@
     .left-panel .panel-card { flex:unset; }
     .pie-wrap { width:100px; height:100px; }
     .pie-wrap canvas { width:100px; height:100px; }
-    .completion-feed { height:50px; }
+    .completion-feed { height:52px; }
     .completion-feed .feed-header { display:none; }
     .feed-item { font-size:7px; padding:1px 8px; gap:1px 3px; white-space:nowrap; }
     .feed-item .fi-case { display:none; }
@@ -806,9 +806,9 @@
     .pie-wrap { width:80px; height:80px; }
     .pie-wrap canvas { width:80px; height:80px; }
     .pie-legend .item { font-size:8px; }
-    .completion-feed { height:40px; }
+    .completion-feed { height:42px; }
     .feed-header { display:none; }
-    .feed-item { font-size:7px; padding:0px 5px; gap:1px 3px; white-space:nowrap; flex-wrap:nowrap; }
+    .feed-item { font-size:7px; padding:1.5px 5px; gap:1px 3px; white-space:nowrap; flex-wrap:nowrap; }
     .feed-item .fi-case { display:none; }
     .feed-item .fi-amount { display:none; }
     .feed-item .fi-badge { display:none; }
@@ -1102,46 +1102,61 @@ function unlockAudio() {
   document.addEventListener(evt, unlockAudio, { once: false, passive: true });
 });
 
-// 叮——任务完成提示音
+// 叮咚——任务完成提示音（门铃双音）
 function playDing() {
   if (!audioReady) return;
   try {
     const ctx = ensureAudioCtx();
     const now = ctx.currentTime;
-    // 主音
+
+    // 叮 — 第一声（高音短促）
     const osc1 = ctx.createOscillator();
     const gain1 = ctx.createGain();
     osc1.type = 'sine';
-    osc1.frequency.setValueAtTime(1200, now);
-    osc1.frequency.exponentialRampToValueAtTime(1600, now + 0.06);
-    osc1.frequency.exponentialRampToValueAtTime(1400, now + 0.18);
+    osc1.frequency.setValueAtTime(1100, now);
+    osc1.frequency.exponentialRampToValueAtTime(1300, now + 0.08);
     gain1.gain.setValueAtTime(0, now);
-    gain1.gain.linearRampToValueAtTime(0.35, now + 0.02);
-    gain1.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+    gain1.gain.linearRampToValueAtTime(0.3, now + 0.02);
+    gain1.gain.setValueAtTime(0.25, now + 0.18);
+    gain1.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
     osc1.connect(gain1); gain1.connect(ctx.destination);
-    osc1.start(now); osc1.stop(now + 0.35);
-    // 谐波
+    osc1.start(now); osc1.stop(now + 0.25);
+
+    // 叮谐波
+    const osc1h = ctx.createOscillator();
+    const gain1h = ctx.createGain();
+    osc1h.type = 'sine';
+    osc1h.frequency.setValueAtTime(2200, now);
+    osc1h.frequency.exponentialRampToValueAtTime(2600, now + 0.06);
+    gain1h.gain.setValueAtTime(0, now);
+    gain1h.gain.linearRampToValueAtTime(0.1, now + 0.01);
+    gain1h.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+    osc1h.connect(gain1h); gain1h.connect(ctx.destination);
+    osc1h.start(now); osc1h.stop(now + 0.2);
+
+    // 咚 — 第二声（低音圆润，延迟出现）
     const osc2 = ctx.createOscillator();
     const gain2 = ctx.createGain();
     osc2.type = 'sine';
-    osc2.frequency.setValueAtTime(2400, now);
-    osc2.frequency.exponentialRampToValueAtTime(3000, now + 0.05);
-    gain2.gain.setValueAtTime(0, now);
-    gain2.gain.linearRampToValueAtTime(0.15, now + 0.01);
-    gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+    osc2.frequency.setValueAtTime(660, now + 0.22);
+    osc2.frequency.exponentialRampToValueAtTime(520, now + 0.7);
+    gain2.gain.setValueAtTime(0, now + 0.22);
+    gain2.gain.linearRampToValueAtTime(0.3, now + 0.25);
+    gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.7);
     osc2.connect(gain2); gain2.connect(ctx.destination);
-    osc2.start(now); osc2.stop(now + 0.25);
-    // 余音
-    const osc3 = ctx.createOscillator();
-    const gain3 = ctx.createGain();
-    osc3.type = 'triangle';
-    osc3.frequency.setValueAtTime(800, now + 0.15);
-    osc3.frequency.exponentialRampToValueAtTime(600, now + 0.5);
-    gain3.gain.setValueAtTime(0, now + 0.15);
-    gain3.gain.linearRampToValueAtTime(0.12, now + 0.2);
-    gain3.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
-    osc3.connect(gain3); gain3.connect(ctx.destination);
-    osc3.start(now + 0.15); osc3.stop(now + 0.5);
+    osc2.start(now + 0.22); osc2.stop(now + 0.7);
+
+    // 咚谐波（低八度泛音增加厚重感）
+    const osc2h = ctx.createOscillator();
+    const gain2h = ctx.createGain();
+    osc2h.type = 'triangle';
+    osc2h.frequency.setValueAtTime(330, now + 0.22);
+    osc2h.frequency.exponentialRampToValueAtTime(260, now + 0.7);
+    gain2h.gain.setValueAtTime(0, now + 0.22);
+    gain2h.gain.linearRampToValueAtTime(0.12, now + 0.26);
+    gain2h.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
+    osc2h.connect(gain2h); gain2h.connect(ctx.destination);
+    osc2h.start(now + 0.22); osc2h.stop(now + 0.6);
   } catch(e) { /* 静默 */ }
 }
 
