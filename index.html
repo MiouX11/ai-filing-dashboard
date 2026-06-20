@@ -507,13 +507,13 @@
 
   /* ====== 弹窗通知系统 ====== */
   .toast-container {
-    position:fixed; top:20px; right:20px; z-index:9999;
-    display:flex; flex-direction:column; gap:10px;
+    position:fixed; bottom:24px; right:24px; z-index:9999;
+    display:flex; flex-direction:column-reverse; gap:12px;
     pointer-events:none;
   }
   .toast {
     pointer-events:auto;
-    min-width:320px; max-width:420px;
+    min-width:380px; max-width:520px;
     background:rgba(13,21,37,0.97); border:1px solid var(--border);
     padding:0;
     transform:translateX(130%); opacity:0;
@@ -528,17 +528,17 @@
   }
   .toast.case-new::before { background:var(--accent); box-shadow:0 0 12px rgba(0,212,255,0.5); }
   .toast.task-done::before { background:var(--work); box-shadow:0 0 12px rgba(0,255,136,0.5); }
-  .toast .toast-inner { padding:14px 18px; display:flex; gap:12px; align-items:flex-start; }
+  .toast .toast-inner { padding:18px 22px; display:flex; gap:14px; align-items:flex-start; }
   .toast .toast-icon {
-    width:36px; height:36px; flex-shrink:0;
+    width:42px; height:42px; flex-shrink:0;
     display:flex; align-items:center; justify-content:center;
-    font-size:14px; font-weight:700;
+    font-size:16px; font-weight:700;
   }
   .toast.case-new .toast-icon { background:rgba(0,212,255,0.1); color:var(--accent); border:1px solid rgba(0,212,255,0.2); }
   .toast.task-done .toast-icon { background:rgba(0,255,136,0.1); color:var(--work); border:1px solid rgba(0,255,136,0.2); }
   .toast .toast-body { flex:1; }
-  .toast .toast-title { font-size:12px; font-weight:600; color:var(--text); margin-bottom:3px; }
-  .toast .toast-msg { font-size:10px; color:var(--text-dim); line-height:1.5; }
+  .toast .toast-title { font-size:14px; font-weight:600; color:var(--text); margin-bottom:4px; }
+  .toast .toast-msg { font-size:11px; color:var(--text-dim); line-height:1.6; }
   .toast .toast-close {
     position:absolute; top:8px; right:10px;
     width:20px; height:20px; cursor:pointer;
@@ -574,7 +574,7 @@
     .think-node { font-size:10px; padding:8px 10px; }
     .think-node.active { font-size:11px; }
     .thinking-stage .ts-header .ts-name { font-size:14px; }
-    .toast { min-width:280px; max-width:380px; }
+    .toast { min-width:340px; max-width:460px; }
   }
   @media (max-width:1200px) {
     .app { padding:6px 8px; }
@@ -598,7 +598,7 @@
     .region-header { flex-wrap:wrap; gap:6px; }
     .region-header .region-total-debt { margin-left:0; }
     .region-robots { grid-template-columns:repeat(auto-fill, minmax(120px, 1fr)); }
-    .toast { min-width:260px; max-width:340px; }
+    .toast { min-width:300px; max-width:420px; }
   }
 
   @media (max-width:768px) {
@@ -673,7 +673,7 @@
     .task-queue { padding:6px 8px; }
     .task-queue h4 { font-size:9px; }
     .tq-item { font-size:7px; }
-    .toast { min-width:240px; max-width:300px; }
+    .toast { min-width:280px; max-width:380px; }
     .toast .toast-inner { padding:10px 14px; }
     .toast .toast-title { font-size:10px; }
     .toast .toast-msg { font-size:8px; }
@@ -751,7 +751,7 @@
     .log-panel { max-height:55px; padding:4px 6px; }
     .log-panel h4 { font-size:8px; margin-bottom:2px; }
     .log-entry { font-size:6px; }
-    .toast { min-width:220px; max-width:260px; }
+    .toast { min-width:250px; max-width:340px; }
     .toast .toast-inner { padding:8px 10px; gap:8px; }
     .toast .toast-title { font-size:9px; }
     .toast .toast-msg { font-size:7px; }
@@ -1416,6 +1416,41 @@ function renderDetailPanel(id) {
             ${timeStr ? `<div class="tn-time">${timeStr}</div>` : ''}
           </div>`;
         }).join('')}
+      </div>
+      <!-- AI 综合研判看板 -->
+      <div style="border-top:1px solid rgba(249,115,22,0.12); padding-top:12px; margin-top:4px; display:grid; grid-template-columns:1fr 1fr; gap:8px 16px;">
+        <div style="display:flex; flex-direction:column; gap:5px;">
+          <div style="display:flex; justify-content:space-between; font-size:10px; padding:8px 10px; background:rgba(249,115,22,0.04); border-left:2px solid var(--debt);">
+            <span style="color:var(--text-dim)">胜诉概率</span>
+            <span style="color:#fdba74; font-weight:700; font-family:'Courier New',monospace;">${r.status==='working' ? (75+Math.floor(r.progress/4)).toFixed(0)+'%' : '—'}</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:10px; padding:8px 10px; background:rgba(0,212,255,0.03); border-left:2px solid var(--accent);">
+            <span style="color:var(--text-dim)">类案匹配数</span>
+            <span style="color:#7dd3fc; font-weight:700; font-family:'Courier New',monospace;">${r.status==='working' ? Math.floor(Math.random()*20+8)+' 件' : '—'}</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:10px; padding:8px 10px; background:rgba(0,255,136,0.03); border-left:2px solid var(--work);">
+            <span style="color:var(--text-dim)">证据完整度</span>
+            <span style="color:#6ee7b7; font-weight:700; font-family:'Courier New',monospace;">${r.status==='working' ? (82+Math.floor(r.progress/6)).toFixed(0)+'%' : '—'}</span>
+          </div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:5px;">
+          <div style="display:flex; justify-content:space-between; font-size:10px; padding:8px 10px; background:rgba(245,158,11,0.03); border-left:2px solid var(--done);">
+            <span style="color:var(--text-dim)">风险等级</span>
+            <span style="color:#fbbf24; font-weight:700; font-family:'Courier New',monospace;">${r.debtAmount>7000?'中低风险':'低风险'}</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:10px; padding:8px 10px; background:rgba(124,58,237,0.03); border-left:2px solid var(--accent2);">
+            <span style="color:var(--text-dim)">预计执行周期</span>
+            <span style="color:#c4b5fd; font-weight:700; font-family:'Courier New',monospace;">${r.status==='working' ? (15+Math.floor(r.progress/100*20))+'天' : '—'}</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:10px; padding:8px 10px; background:rgba(255,59,92,0.03); border-left:2px solid var(--danger);">
+            <span style="color:var(--text-dim)">债务人状态</span>
+            <span style="color:#ff6b81; font-weight:700; font-family:'Courier New',monospace;">${r.debtAmount>8000?'多次催缴':'首次通知'}</span>
+          </div>
+        </div>
+      </div>
+      <!-- 底部小字摘要 -->
+      <div style="margin-top:10px; padding:8px 12px; background:rgba(0,0,0,0.2); font-size:9px; color:rgba(136,153,180,0.6); line-height:1.6; border:1px solid rgba(255,255,255,0.03);">
+        <span style="color:var(--debt); font-weight:600;">[ { } ]</span> 本案适用小额诉讼程序 · 一审终审 · 不得上诉 · 立案审查周期预计7个工作日
       </div>
     </div>`;
 }
