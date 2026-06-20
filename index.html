@@ -953,16 +953,50 @@ requestAnimationFrame(drawBg);
 
 // ==================== 音频系统 ====================
 let audioCtx = null;
+let audioReady = false;
+
 function ensureAudioCtx() {
   if (!audioCtx) {
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   }
-  if (audioCtx.state === 'suspended') audioCtx.resume();
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume().then(() => { audioReady = true; });
+  } else {
+    audioReady = true;
+  }
   return audioCtx;
 }
 
+// 浏览器安全策略：AudioContext 必须先有用户交互才能发声
+// 全局监听第一次点击/触摸来激活音频
+function unlockAudio() {
+  if (audioReady) return;
+  try {
+    const ctx = ensureAudioCtx();
+    if (ctx.state === 'suspended') {
+      ctx.resume().then(() => {
+        audioReady = true;
+        // 播放一个极短的无声脉冲确认激活
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(0.001, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.01);
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.01);
+      });
+    } else {
+      audioReady = true;
+    }
+  } catch(e) { /* 静默 */ }
+}
+// 绑定到任何用户交互
+['click','touchstart','keydown'].forEach(evt => {
+  document.addEventListener(evt, unlockAudio, { once: false, passive: true });
+});
+
 // 叮——任务完成提示音
 function playDing() {
+  if (!audioReady) return;
   try {
     const ctx = ensureAudioCtx();
     const now = ctx.currentTime;
@@ -1005,6 +1039,7 @@ function playDing() {
 
 // 新案件提示音
 function playNewCase() {
+  if (!audioReady) return;
   try {
     const ctx = ensureAudioCtx();
     const now = ctx.currentTime;
