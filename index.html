@@ -118,14 +118,14 @@
   .main-content { flex:1; display:flex; gap:8px; min-height:0; }
 
   /* ---- 左侧栏 ---- */
-  .left-panel { width:280px; flex-shrink:0; display:flex; flex-direction:column; gap:8px; min-height:0; }
-  .panel-card { background:rgba(13,21,37,0.8); border:1px solid var(--border); padding:8px 12px; flex-shrink:0; }
-  .panel-card h4 { font-size:9px; color:var(--text-dim); margin-bottom:5px; display:flex; align-items:center; gap:5px; }
-  .pie-wrap { position:relative; width:110px; height:110px; margin:0 auto; }
-  .pie-wrap canvas { width:110px; height:110px; }
-  .pie-legend { margin-top:4px; }
-  .pie-legend .item { display:flex; align-items:center; justify-content:space-between; font-size:8px; padding:1px 0; color:var(--text-dim); }
-  .pie-legend .item .swatch { display:inline-block; width:7px; height:7px; margin-right:4px; }
+  .left-panel { width:280px; flex-shrink:0; display:flex; flex-direction:column; gap:6px; min-height:0; }
+  .panel-card { background:rgba(13,21,37,0.8); border:1px solid var(--border); padding:7px 10px; flex-shrink:0; }
+  .panel-card h4 { font-size:9px; color:var(--text-dim); margin-bottom:4px; display:flex; align-items:center; gap:5px; }
+  .pie-wrap { position:relative; width:100px; height:100px; margin:0 auto; }
+  .pie-wrap canvas { width:100px; height:100px; }
+  .pie-legend { margin-top:3px; }
+  .pie-legend .item { display:flex; align-items:center; justify-content:space-between; font-size:7.5px; padding:0.5px 0; color:var(--text-dim); }
+  .pie-legend .item .swatch { display:inline-block; width:6px; height:6px; margin-right:3px; }
   .pie-legend .item .pct { color:var(--text); font-weight:600; font-family:'Courier New',monospace; }
 
   .completion-feed {
@@ -505,16 +505,16 @@
   .log-entry .msg { flex:1; }
   .log-entry .money { color:var(--work); font-weight:600; white-space:nowrap; font-family:'Courier New',monospace; }
 
-  /* ====== 案件类型详情覆盖层 ====== */
-  .case-overlay {
+  /* ====== 详情覆盖层（案件类型 + 地区 共用） ====== */
+  .case-overlay, .region-overlay {
     position:fixed; top:0; left:0; width:100%; height:100%; z-index:9000;
     background:rgba(0,0,0,0.75); backdrop-filter:blur(6px);
     display:flex; align-items:center; justify-content:center;
     opacity:0; pointer-events:none;
     transition:opacity 0.3s;
   }
-  .case-overlay.open { opacity:1; pointer-events:auto; }
-  .case-overlay .case-modal {
+  .case-overlay.open, .region-overlay.open { opacity:1; pointer-events:auto; }
+  .case-overlay .case-modal, .region-overlay .case-modal {
     background:rgba(13,21,37,0.98); border:1px solid var(--border);
     width:720px; max-width:95vw; max-height:85vh;
     display:flex; flex-direction:column;
@@ -684,7 +684,7 @@
     .stat-card { min-width:calc(33% - 4px); }
     .main-content { flex-direction:column; }
     .left-panel { width:100%; flex-direction:row; gap:6px; min-height:auto; }
-    .left-panel .panel-card { flex:0 0 auto; }
+    .left-panel .panel-card { flex:0 0 auto; min-width:280px; }
     .completion-feed { flex:1; }
     .center-panel { max-height:400px; }
     .right-panel { width:100%; flex-direction:column; gap:6px; }
@@ -695,6 +695,8 @@
     .region-header .region-total-debt { margin-left:0; }
     .region-robots { grid-template-columns:repeat(auto-fill, minmax(120px, 1fr)); }
     .toast { min-width:300px; max-width:420px; }
+    .case-modal { width:90vw !important; max-width:90vw !important; max-height:88vh !important; }
+    .cm-robot-list { grid-template-columns:repeat(auto-fill, minmax(130px, 1fr)) !important; }
   }
 
   @media (max-width:768px) {
@@ -718,8 +720,10 @@
     .main-content { gap:5px; }
     .left-panel { flex-direction:column; width:100%; gap:5px; }
     .left-panel .panel-card { flex:unset; }
-    .pie-wrap { width:90px; height:90px; }
-    .pie-wrap canvas { width:90px; height:90px; }
+    .panel-card { padding:5px 8px; }
+    .pie-wrap { width:70px; height:70px; }
+    .pie-wrap canvas { width:70px; height:70px; }
+    .pie-legend .item { font-size:7px; }
     .completion-feed { flex:1; }
     .completion-feed .feed-header { display:none; }
     .feed-item { font-size:7px; padding:1px 8px; gap:1px 3px; white-space:nowrap; }
@@ -773,6 +777,11 @@
     .toast .toast-inner { padding:10px 14px; }
     .toast .toast-title { font-size:10px; }
     .toast .toast-msg { font-size:8px; }
+    .case-modal { width:96vw !important; max-width:96vw !important; max-height:90vh !important; }
+    .cm-case-header { padding:8px 10px !important; }
+    .cm-case-name { font-size:11px !important; }
+    .cm-robot-list { grid-template-columns:repeat(auto-fill, minmax(105px, 1fr)) !important; }
+    .cm-robot-chip { padding:5px 8px !important; font-size:9px !important; }
     @media (hover:none) {
       .robot-card:hover { transform:none; border-color:var(--border); box-shadow:none; }
       .region-header:hover { background:transparent; }
@@ -870,6 +879,16 @@
     <div class="cm-body" id="caseOverlayBody"></div>
   </div>
 </div>
+<!-- 地区分布详情覆盖层 -->
+<div class="region-overlay" id="regionOverlay" onclick="closeRegionOverlay(event)">
+  <div class="case-modal" onclick="event.stopPropagation()">
+    <div class="cm-header">
+      <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 21h18M5 21V10l7-7 7 7v11" stroke="#8b5cf6" stroke-width="1.5" fill="none"/></svg> 区域法院分布 · 机器人工作详情</h3>
+      <div class="cm-close" onclick="document.getElementById('regionOverlay').classList.remove('open')">&times;</div>
+    </div>
+    <div class="cm-body" id="regionOverlayBody"></div>
+  </div>
+</div>
 
 <!-- 弹窗通知容器 -->
 <div class="toast-container" id="toastContainer"></div>
@@ -933,8 +952,14 @@
     <div class="left-panel">
       <div class="panel-card pie-panel-clickable" onclick="openCaseOverlay()">
         <h4><svg width="12" height="12" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#f97316" stroke-width="1.5"/><line x1="12" y1="3" x2="12" y2="21" stroke="#f97316" stroke-width="1"/><line x1="3" y1="12" x2="21" y2="12" stroke="#f97316" stroke-width="1"/></svg> 欠款类型分布</h4>
-        <div class="pie-wrap"><canvas id="pieCanvas" width="110" height="110"></canvas></div>
+        <div class="pie-wrap"><canvas id="pieCanvas" width="100" height="100"></canvas></div>
         <div class="pie-legend" id="pieLegend"></div>
+        <div class="pie-hint">点击查看详情</div>
+      </div>
+      <div class="panel-card pie-panel-clickable" onclick="openRegionOverlay()">
+        <h4><svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M3 21h18M5 21V10l7-7 7 7v11" stroke="#8b5cf6" stroke-width="1.5" fill="none"/></svg> 区域法院分布</h4>
+        <div class="pie-wrap"><canvas id="regionPieCanvas" width="100" height="100"></canvas></div>
+        <div class="pie-legend" id="regionPieLegend"></div>
         <div class="pie-hint">点击查看详情</div>
       </div>
       <div class="completion-feed" id="completionFeed"
@@ -1384,13 +1409,13 @@ function renderQueue() {
 // ==================== 饼图 ====================
 function drawPieChart() {
   const pc = document.getElementById('pieCanvas'), pctx = pc.getContext('2d');
-  const cx = 55, cy = 55, outerR = 46, innerR = 27;
+  const cx = 50, cy = 50, outerR = 42, innerR = 24;
   const counts = {};
   robots.forEach(r => { counts[r.caseType] = (counts[r.caseType] || 0) + 1; });
   const total = robots.length;
   const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
 
-  pctx.clearRect(0, 0, 130, 130);
+  pctx.clearRect(0, 0, 100, 100);
   let angle = -Math.PI / 2;
   entries.forEach(([type, count], i) => {
     const sa = (count / total) * Math.PI * 2;
@@ -1398,18 +1423,18 @@ function drawPieChart() {
     pctx.fillStyle = caseColors[i % caseColors.length]; pctx.fill();
     const ma = angle + sa / 2;
     pctx.fillStyle = caseColors[i % caseColors.length];
-    pctx.font = 'bold 7px "PingFang SC","Microsoft YaHei",monospace';
+    pctx.font = 'bold 6px "PingFang SC","Microsoft YaHei",monospace';
     pctx.textAlign = ma > Math.PI / 2 && ma < Math.PI * 1.5 ? 'right' : 'left';
-    pctx.fillText(type.slice(0, 3) + ' ' + Math.round(count / total * 100) + '%', cx + Math.cos(ma) * (outerR + 6), cy + Math.sin(ma) * (outerR + 6) + 2);
+    pctx.fillText(type.slice(0, 2) + Math.round(count / total * 100) + '%', cx + Math.cos(ma) * (outerR + 8), cy + Math.sin(ma) * (outerR + 8) + 1);
     angle += sa;
   });
-  pctx.fillStyle = '#e2e8f0'; pctx.font = 'bold 11px "Courier New",monospace'; pctx.textAlign = 'center';
+  pctx.fillStyle = '#e2e8f0'; pctx.font = 'bold 10px "Courier New",monospace'; pctx.textAlign = 'center';
   pctx.fillText(total, cx, cy - 1);
-  pctx.fillStyle = '#8899b4'; pctx.font = '6px "PingFang SC","Microsoft YaHei",monospace';
-  pctx.fillText('总案件', cx, cy + 11);
+  pctx.fillStyle = '#8899b4'; pctx.font = '5.5px "PingFang SC","Microsoft YaHei",monospace';
+  pctx.fillText('总案件', cx, cy + 10);
 
   document.getElementById('pieLegend').innerHTML = entries.map(([type, count], i) =>
-    `<div class="item"><span><span class="swatch" style="background:${caseColors[i % caseColors.length]}"></span>${type}</span><span class="pct">${count}<span style="color:#475569;font-weight:400">/${total}</span></span></div>`
+    `<div class="item"><span><span class="swatch" style="background:${caseColors[i % caseColors.length]}"></span>${type.slice(0,6)}</span><span class="pct">${count}<span style="color:#475569;font-weight:400">/${total}</span></span></div>`
   ).join('');
 }
 
@@ -1471,10 +1496,106 @@ function toggleCaseGroup(i) {
   if (el) el.classList.toggle('expanded');
 }
 
+function toggleRegionGroupDetail(ri) {
+  const el = document.getElementById('regionGroup' + ri);
+  if (el) el.classList.toggle('expanded');
+}
+
 function selectFromOverlay(id) {
   // 关闭覆盖层
   document.getElementById('caseOverlay').classList.remove('open');
   // 选择机器人（和点击右侧卡片一样的效果）
+  selectRobot(id);
+}
+
+// ==================== 地区饼图 ====================
+const regionColors = ['#8b5cf6','#06b6d4','#f59e0b','#00ff88','#ef4444','#ec4899','#22c55e','#f97316','#6366f1','#84cc16'];
+function drawRegionPie() {
+  const pc = document.getElementById('regionPieCanvas'), pctx = pc.getContext('2d');
+  const cx = 50, cy = 50, outerR = 42, innerR = 24;
+  const counts = {};
+  robots.forEach(r => { const k = regions[r.region].name; counts[k] = (counts[k] || 0) + 1; });
+  const total = robots.length;
+  const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+
+  pctx.clearRect(0, 0, 100, 100);
+  let angle = -Math.PI / 2;
+  entries.forEach(([name, count], i) => {
+    const sa = (count / total) * Math.PI * 2;
+    pctx.beginPath(); pctx.arc(cx, cy, outerR, angle, angle + sa); pctx.arc(cx, cy, innerR, angle + sa, angle, true); pctx.closePath();
+    pctx.fillStyle = regionColors[i % regionColors.length]; pctx.fill();
+    const ma = angle + sa / 2;
+    pctx.fillStyle = regionColors[i % regionColors.length];
+    pctx.font = 'bold 6px "PingFang SC","Microsoft YaHei",monospace';
+    pctx.textAlign = ma > Math.PI / 2 && ma < Math.PI * 1.5 ? 'right' : 'left';
+    pctx.fillText(name.slice(0, 2) + Math.round(count / total * 100) + '%', cx + Math.cos(ma) * (outerR + 8), cy + Math.sin(ma) * (outerR + 8) + 1);
+    angle += sa;
+  });
+  pctx.fillStyle = '#e2e8f0'; pctx.font = 'bold 10px "Courier New",monospace'; pctx.textAlign = 'center';
+  pctx.fillText('10区', cx, cy - 1);
+  pctx.fillStyle = '#8899b4'; pctx.font = '5.5px "PingFang SC","Microsoft YaHei",monospace';
+  pctx.fillText('对接法院', cx, cy + 10);
+
+  document.getElementById('regionPieLegend').innerHTML = entries.map(([name, count], i) =>
+    `<div class="item"><span><span class="swatch" style="background:${regionColors[i % regionColors.length]}"></span>${name.slice(0,6)}</span><span class="pct">${count}<span style="color:#475569;font-weight:400">/${total}</span></span></div>`
+  ).join('');
+}
+
+// ==================== 地区覆盖层 ====================
+function openRegionOverlay() {
+  const caseCounts = {};
+  robots.forEach(r => { caseCounts[r.caseType] = (caseCounts[r.caseType] || 0) + 1; });
+  const mainType = Object.entries(caseCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || '';
+  const sm = { working: '工作中', done: '已完结', standby: '待命' };
+  const scls = { working: 's-working', done: 's-done', standby: 's-standby' };
+
+  let html = '';
+  regions.forEach((region, ri) => {
+    const regionRobots = robots.filter(r => r.region === ri).sort((a, b) => {
+      const order = { working: 0, done: 1, standby: 2 };
+      return order[a.status] - order[b.status];
+    });
+    const working = regionRobots.filter(r => r.status === 'working');
+    const totalDebt = regionRobots.reduce((s, r) => s + r.debtAmount, 0);
+
+    const robotsHTML = regionRobots.map(r => `
+      <div class="cm-robot-chip" onclick="event.stopPropagation(); selectFromRegionOverlay(${r.id})" title="点击查看详情">
+        <span class="chip-name">${r.name}</span>
+        <span style="font-size:8px;color:var(--text-dim)">¥${r.debtAmount}</span>
+        <span class="chip-status ${scls[r.status]}">${sm[r.status]}</span>
+      </div>`).join('');
+
+    html += `<div class="cm-case-group" id="regionGroup${ri}">
+      <div class="cm-case-header" onclick="toggleRegionGroupDetail(${ri})">
+        <div class="cm-case-left">
+          <span class="cm-swatch" style="background:${regionColors[ri]}"></span>
+          <span class="cm-case-name">${region.name}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:10px;color:var(--debt);font-family:'Courier New',monospace;">¥${totalDebt.toLocaleString()}</span>
+          <span class="cm-case-count">${regionRobots.length}机器人 · ${working.length}工作</span>
+          <span class="cm-expand">+</span>
+        </div>
+      </div>
+      <div class="cm-robot-list">${robotsHTML}</div>
+    </div>`;
+  });
+
+  document.getElementById('regionOverlayBody').innerHTML = html;
+  document.getElementById('regionOverlay').classList.add('open');
+  setTimeout(() => {
+    const first = document.getElementById('regionGroup0');
+    if (first) first.classList.add('expanded');
+  }, 50);
+}
+
+function closeRegionOverlay(e) {
+  if (e && e.target !== document.getElementById('regionOverlay')) return;
+  document.getElementById('regionOverlay').classList.remove('open');
+}
+
+function selectFromRegionOverlay(id) {
+  document.getElementById('regionOverlay').classList.remove('open');
   selectRobot(id);
 }
 
@@ -1776,7 +1897,7 @@ function tick() {
     lastNewCaseToast = now;
   }
 
-  renderRegions(); updateStats(); drawPieChart(); renderQueue();
+  renderRegions(); updateStats(); drawPieChart(); drawRegionPie(); renderQueue();
 }
 
 // ==================== 启动 ====================
