@@ -119,17 +119,17 @@
 
   /* ---- 左侧栏 ---- */
   .left-panel { width:280px; flex-shrink:0; display:flex; flex-direction:column; gap:8px; min-height:0; }
-  .panel-card { background:rgba(13,21,37,0.8); border:1px solid var(--border); padding:10px 12px; flex-shrink:0; }
-  .panel-card h4 { font-size:10px; color:var(--text-dim); margin-bottom:7px; display:flex; align-items:center; gap:5px; }
-  .pie-wrap { position:relative; width:130px; height:130px; margin:0 auto; }
-  .pie-wrap canvas { width:130px; height:130px; }
-  .pie-legend { margin-top:6px; }
-  .pie-legend .item { display:flex; align-items:center; justify-content:space-between; font-size:9px; padding:1.5px 0; color:var(--text-dim); }
+  .panel-card { background:rgba(13,21,37,0.8); border:1px solid var(--border); padding:8px 12px; flex-shrink:0; }
+  .panel-card h4 { font-size:9px; color:var(--text-dim); margin-bottom:5px; display:flex; align-items:center; gap:5px; }
+  .pie-wrap { position:relative; width:110px; height:110px; margin:0 auto; }
+  .pie-wrap canvas { width:110px; height:110px; }
+  .pie-legend { margin-top:4px; }
+  .pie-legend .item { display:flex; align-items:center; justify-content:space-between; font-size:8px; padding:1px 0; color:var(--text-dim); }
   .pie-legend .item .swatch { display:inline-block; width:7px; height:7px; margin-right:4px; }
   .pie-legend .item .pct { color:var(--text); font-weight:600; font-family:'Courier New',monospace; }
 
   .completion-feed {
-    flex:0 0 104px; height:104px; min-height:0;
+    flex:1; min-height:0;
     background:rgba(13,21,37,0.9); border:1px solid var(--border);
     padding:0;
     display:flex; flex-direction:column;
@@ -685,7 +685,7 @@
     .main-content { flex-direction:column; }
     .left-panel { width:100%; flex-direction:row; gap:6px; min-height:auto; }
     .left-panel .panel-card { flex:0 0 auto; }
-    .completion-feed { flex:0 0 72px; height:72px; }
+    .completion-feed { flex:1; }
     .center-panel { max-height:400px; }
     .right-panel { width:100%; flex-direction:column; gap:6px; }
     .thinking-stage .ts-body { max-height:250px; }
@@ -718,9 +718,9 @@
     .main-content { gap:5px; }
     .left-panel { flex-direction:column; width:100%; gap:5px; }
     .left-panel .panel-card { flex:unset; }
-    .pie-wrap { width:100px; height:100px; }
-    .pie-wrap canvas { width:100px; height:100px; }
-    .completion-feed { height:52px; }
+    .pie-wrap { width:90px; height:90px; }
+    .pie-wrap canvas { width:90px; height:90px; }
+    .completion-feed { flex:1; }
     .completion-feed .feed-header { display:none; }
     .feed-item { font-size:7px; padding:1px 8px; gap:1px 3px; white-space:nowrap; }
     .feed-item .fi-case { display:none; }
@@ -803,10 +803,10 @@
     .left-panel { gap:4px; }
     .panel-card { padding:7px 8px; }
     .panel-card h4 { font-size:9px; margin-bottom:4px; }
-    .pie-wrap { width:80px; height:80px; }
-    .pie-wrap canvas { width:80px; height:80px; }
+    .pie-wrap { width:75px; height:75px; }
+    .pie-wrap canvas { width:75px; height:75px; }
     .pie-legend .item { font-size:8px; }
-    .completion-feed { height:42px; }
+    .completion-feed { flex:1; }
     .feed-header { display:none; }
     .feed-item { font-size:7px; padding:1.5px 5px; gap:1px 3px; white-space:nowrap; flex-wrap:nowrap; }
     .feed-item .fi-case { display:none; }
@@ -933,7 +933,7 @@
     <div class="left-panel">
       <div class="panel-card pie-panel-clickable" onclick="openCaseOverlay()">
         <h4><svg width="12" height="12" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#f97316" stroke-width="1.5"/><line x1="12" y1="3" x2="12" y2="21" stroke="#f97316" stroke-width="1"/><line x1="3" y1="12" x2="21" y2="12" stroke="#f97316" stroke-width="1"/></svg> 欠款类型分布</h4>
-        <div class="pie-wrap"><canvas id="pieCanvas" width="130" height="130"></canvas></div>
+        <div class="pie-wrap"><canvas id="pieCanvas" width="110" height="110"></canvas></div>
         <div class="pie-legend" id="pieLegend"></div>
         <div class="pie-hint">点击查看详情</div>
       </div>
@@ -1384,7 +1384,7 @@ function renderQueue() {
 // ==================== 饼图 ====================
 function drawPieChart() {
   const pc = document.getElementById('pieCanvas'), pctx = pc.getContext('2d');
-  const cx = 65, cy = 65, outerR = 55, innerR = 32;
+  const cx = 55, cy = 55, outerR = 46, innerR = 27;
   const counts = {};
   robots.forEach(r => { counts[r.caseType] = (counts[r.caseType] || 0) + 1; });
   const total = robots.length;
@@ -1403,10 +1403,10 @@ function drawPieChart() {
     pctx.fillText(type.slice(0, 3) + ' ' + Math.round(count / total * 100) + '%', cx + Math.cos(ma) * (outerR + 6), cy + Math.sin(ma) * (outerR + 6) + 2);
     angle += sa;
   });
-  pctx.fillStyle = '#e2e8f0'; pctx.font = 'bold 13px "Courier New",monospace'; pctx.textAlign = 'center';
-  pctx.fillText(total, cx, cy - 2);
-  pctx.fillStyle = '#8899b4'; pctx.font = '7px "PingFang SC","Microsoft YaHei",monospace';
-  pctx.fillText('总案件', cx, cy + 12);
+  pctx.fillStyle = '#e2e8f0'; pctx.font = 'bold 11px "Courier New",monospace'; pctx.textAlign = 'center';
+  pctx.fillText(total, cx, cy - 1);
+  pctx.fillStyle = '#8899b4'; pctx.font = '6px "PingFang SC","Microsoft YaHei",monospace';
+  pctx.fillText('总案件', cx, cy + 11);
 
   document.getElementById('pieLegend').innerHTML = entries.map(([type, count], i) =>
     `<div class="item"><span><span class="swatch" style="background:${caseColors[i % caseColors.length]}"></span>${type}</span><span class="pct">${count}<span style="color:#475569;font-weight:400">/${total}</span></span></div>`
