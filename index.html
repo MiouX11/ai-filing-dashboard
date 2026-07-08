@@ -764,6 +764,20 @@ function drawBg(ts){if(isMobile&&ts-lastBgDraw<80){requestAnimationFrame(drawBg)
 const VALID_PASSWORD='JUDai888';
 let currentUser='';
 
+// ==================== LOCALSTORAGE SYNC ====================
+const LS_ROBOTS='dash_robots',LS_USERS='dash_users',LS_LOGS='dash_logs',LS_COMPS='dash_completions';
+function syncRobotsToStorage(){try{localStorage.setItem(LS_ROBOTS,JSON.stringify(robots))}catch(e){}}
+function syncUsersToStorage(users){try{localStorage.setItem(LS_USERS,JSON.stringify(users))}catch(e){}}
+function getStoredUsers(){try{const s=localStorage.getItem(LS_USERS);return s?JSON.parse(s):[]}catch(e){return[]}}
+function registerSyncUser(name){const users=getStoredUsers().filter(u=>u.name!==name);users.push({name,loginTime:Date.now(),type:'robot'});syncUsersToStorage(users)}
+function unregisterSyncUser(name){const users=getStoredUsers().filter(u=>u.name!==name);syncUsersToStorage(users)}
+function claimRobotInStorage(robotId,userName){const r=robots.find(r=>r.id===robotId);if(r){r.controller=userName;r.controllerLoginTime=Date.now();syncRobotsToStorage()}}
+function releaseRobotInStorage(robotId){const r=robots.find(r=>r.id===robotId);if(r){r.controller=null;r.controllerLoginTime=null;syncRobotsToStorage()}}
+function addSyncLog(robotName,caseType,debtAmt,earned,userName){try{const key=LS_LOGS;let logs=[];const s=localStorage.getItem(key);if(s)logs=JSON.parse(s);logs.push({time:new Date().toTimeString().slice(0,8),robot:robotName,case:caseType,debt:debtAmt,money:earned,user:userName||''});if(logs.length>300)logs=logs.slice(-300);localStorage.setItem(key,JSON.stringify(logs))}catch(e){}}
+function addSyncCompletion(robotName,caseType,debtAmt,userName){try{const key=LS_COMPS;let comps=[];const s=localStorage.getItem(key);if(s)comps=JSON.parse(s);comps.push({time:new Date().toTimeString().slice(0,8),robot:robotName,case:caseType,amount:'¥'+debtAmt,money:'+¥5.00',user:userName||''});if(comps.length>400)comps=comps.slice(-400);localStorage.setItem(key,JSON.stringify(comps))}catch(e){}}
+// Listen for storage changes from other tabs (e.g. master releasing a robot)
+window.addEventListener('storage',function(e){if(e.key===LS_ROBOTS){try{const stored=JSON.parse(e.newValue);if(stored){robots.forEach(r=>{const sr=stored.find(s=>s.id===r.id);if(sr&&sr.controller!==r.controller&&!sr.controller&&r.controller===currentUser){r.controller=null}});syncRobotsToStorage()}}catch(ex){}}});
+
 function doLogin(){
   const nameEl=document.getElementById('loginName');
   const passEl=document.getElementById('loginPass');
@@ -781,16 +795,25 @@ function doLogin(){
   document.getElementById('loginOverlay').classList.add('hidden');
   // Store login state
   try{sessionStorage.setItem('dashboard_user',name)}catch(e){}
+  // Register in shared user list
+  registerSyncUser(name);
+  // Load synced robot data if available
+  try{const stored=localStorage.getItem(LS_ROBOTS);if(stored){const synced=JSON.parse(stored);robots.forEach(r=>{const sr=synced.find(s=>s.id===r.id);if(sr){r.status=sr.status;r.progress=sr.progress;r.earned=sr.earned;r.controller=sr.controller;r.caseType=sr.caseType||r.caseType;r.debtAmount=sr.debtAmount||r.debtAmount}});totalTasksCompleted=robots.filter(r=>r.status==='done').length;totalEarnings=robots.reduce((s,r)=>s+(r.earned||0),0)+1250;totalDebtAmount=robots.reduce((s,r)=>r.status==='done'?s+r.debtAmount:s,0)}}catch(e){}
+  syncRobotsToStorage();
 }
 
 function doLogout(){
   if(confirm('确定要退出登录吗？')){
+    // Release claimed robot
+    if(detailRobotId!==null)releaseRobotInStorage(detailRobotId);
+    unregisterSyncUser(currentUser);
     currentUser='';
     document.getElementById('loginName').value='';
     document.getElementById('loginPass').value='';
     document.getElementById('loginError').textContent='';
     document.getElementById('loginOverlay').classList.remove('hidden');
     try{sessionStorage.removeItem('dashboard_user')}catch(e){}
+    closeRobotDetail();
   }
 }
 
@@ -900,9 +923,14 @@ let detailDebtAmt=0;
 let detailTokens=0;
 
 function openRobotDetail(id){
+  // Release previous robot if any
+  if(detailRobotId!==null&&detailRobotId!==id)releaseRobotInStorage(detailRobotId);
   detailRobotId=id;
   const r=robots.find(r=>r.id===id);
   if(!r)return;
+
+  // Claim this robot in shared storage
+  if(currentUser)claimRobotInStorage(id,currentUser);
 
   // Init data
   detailProgress=r.progress;
@@ -933,6 +961,7 @@ function openRobotDetail(id){
 }
 
 function closeRobotDetail(){
+  if(detailRobotId!==null)releaseRobotInStorage(detailRobotId);
   document.getElementById('robotDetailOverlay').classList.remove('open');
   detailRobotId=null;
 }
@@ -1149,6 +1178,9 @@ function tick(){
       r.caseType=debtTypes[Math.floor(Math.random()*debtTypes.length)];r.debtAmount=randDebt();r.caseCount++;
       r.singleCases=(r.singleCases||0)+1;r.singleEarned=(r.singleEarned||0)+5;
       addLog(r.name,r.caseType,r.debtAmount,5);addCompletion(r.name,r.caseType,r.debtAmount);
+      // Sync to master dashboard
+      addSyncLog(r.name,r.caseType,r.debtAmount,5,currentUser||'');
+      addSyncCompletion(r.name,r.caseType,r.debtAmount,currentUser||'');
       playDing();
       if(now-lastTaskToast>15000){showToast('task-done','任务完成通知',r.name+' 已完成「'+r.caseType+'」追偿 ¥'+r.debtAmount+'，收益 +¥5.00，已接取新案件。',8000);lastTaskToast=now}
       const card=document.querySelector('.robot-card[data-id="'+r.id+'"]');if(card){card.classList.add('flash');setTimeout(()=>card.classList.remove('flash'),500)}
@@ -1160,6 +1192,8 @@ function tick(){
   const minutesSinceLastCase=(now-lastNewCaseToast)/60000;
   if(minutesSinceLastCase>=(2+Math.random()*1)){const wCount=robots.filter(r=>r.status==='working').length;const pendingRobots=robots.filter(r=>r.status==='standby');if(pendingRobots.length>0){const sample=pendingRobots[Math.floor(Math.random()*pendingRobots.length)];playNewCase();showToast('case-new','新案件待受理','系统检测到 '+sample.name+' 可接取新案件。当前 '+wCount+' 个机器人在线工作，待处理案件池剩余 '+pendingRobots.length+' 件。',8000)}else{const wSample=robots.filter(r=>r.status==='working');if(wSample.length>0){const s=wSample[Math.floor(Math.random()*wSample.length)];showToast('case-new','案件队列更新','全部100个AI机器人均在工作或已完结。'+s.name+' 即将完成当前任务。',6000)}}lastNewCaseToast=now}
   renderRegions();updateStats();drawPieChart();drawRegionPie();renderQueue();
+  // Sync robot states to master every 2 seconds
+  if(tickCount%2===0)syncRobotsToStorage();
 }
 
 // ==================== INIT ====================
