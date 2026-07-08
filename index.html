@@ -475,6 +475,126 @@
   .pie-tooltip .tt-val{font-family:Courier New,monospace;font-size:13px;font-weight:700}
   .pie-tooltip .tt-pct{color:var(--text-dim);font-size:9px;margin-left:6px}
 
+  /* === RICH INTERACTIVE EFFECTS === */
+
+  /* Tab bar enhanced */
+  .rd-tab{cursor:pointer;transition:all 0.3s ease;position:relative;padding:10px 18px}
+  .rd-tab::after{content:'';position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:0;height:2px;background:var(--debt);transition:width 0.3s ease}
+  .rd-tab:hover{color:#fdba74}
+  .rd-tab.active::after{width:70%}
+  .rd-tab-robot{transition:all 0.3s ease}
+
+  /* Click ripple */
+  .ripple{position:absolute;border-radius:50%;background:rgba(255,255,255,0.15);transform:scale(0);animation:rippleAnim 0.6s ease-out;pointer-events:none}
+  @keyframes rippleAnim{to{transform:scale(4);opacity:0}}
+
+  /* Workbench - thought stream typing */
+  .stream-content{transition:color 0.3s}
+  .cursor-blink{animation:cursorFlash 0.8s infinite}
+  @keyframes cursorFlash{0%,100%{opacity:1}50%{opacity:0}}
+
+  /* Neural activity enhanced */
+  .neural-activity .bar{transition:height 0.3s ease}
+  .neural-activity:hover .bar{animation:neuralBurst 0.4s ease-out}
+  @keyframes neuralBurst{0%{height:100%}100%{height:var(--h)}}
+
+  /* Think timeline hover */
+  .think-node{transition:all 0.3s ease;padding:4px 6px;border-radius:3px;cursor:default}
+  .think-node:hover{background:rgba(255,255,255,0.02)}
+  .think-node.active:hover{background:rgba(0,255,136,0.04)}
+  .think-node.done:hover{background:rgba(245,158,11,0.04)}
+  .think-node .tn-detail{max-height:0;overflow:hidden;transition:max-height 0.3s ease;font-size:9px;color:rgba(136,153,180,0.6)}
+  .think-node:hover .tn-detail{max-height:60px}
+
+  /* Judgment card hover */
+  .judgment-item{transition:all 0.3s ease;cursor:default;border-left:2px solid transparent}
+  .judgment-item:hover{transform:translateX(3px);background:rgba(255,255,255,0.02)}
+  .judgment-item .jv{transition:all 0.3s ease}
+  .judgment-item:hover .jv{transform:scale(1.1)}
+
+  /* Case info chips */
+  .case-info-chip{transition:all 0.3s ease;cursor:pointer;position:relative}
+  .case-info-chip:hover{transform:translateY(-1px);border-color:rgba(249,115,22,0.4);box-shadow:0 2px 8px rgba(249,115,22,0.1)}
+  .case-info-chip:active{transform:scale(0.96)}
+
+  /* Progress bar shimmer */
+  .progress-bar{overflow:hidden;position:relative}
+  .progress-fill{position:relative}
+  .progress-fill::after{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.15),transparent);animation:shim 2s infinite}
+  @keyframes shim{0%{left:-100%}100%{left:200%}}
+
+  /* DC Stats cards hover */
+  .dc-stat-card{transition:all 0.3s cubic-bezier(0.4,0,0.2,1);cursor:default;position:relative;overflow:hidden}
+  .dc-stat-card:hover{transform:translateY(-2px);border-color:rgba(0,212,255,0.4);box-shadow:0 6px 20px rgba(0,0,0,0.3),0 0 0 1px rgba(0,212,255,0.08)}
+  .dc-stat-card .scb-val{transition:all 0.3s ease}
+  .dc-stat-card:hover .scb-val{transform:scale(1.05)}
+
+  /* Bar chart row enhanced */
+  .dc-bar-row{transition:all 0.25s ease;cursor:pointer;padding:3px 6px;border-radius:3px}
+  .dc-bar-row:hover{background:rgba(0,212,255,0.05)}
+  .dc-bar-row:hover .bar-fill{filter:brightness(1.3);box-shadow:0 0 10px rgba(0,212,255,0.3)}
+  .dc-bar-row:active .bar-fill{transform:scaleX(0.95);transition:transform 0.15s}
+
+  /* DC table rows */
+  .dc-table tr{transition:all 0.2s ease;cursor:default}
+  .dc-table tr:hover{background:rgba(0,212,255,0.04)}
+  .dc-table tr:hover td{color:#fff}
+
+  /* DC 7-day overview */
+  .dc-grid>div:last-child .dc-body>div>div{transition:all 0.2s ease;cursor:default;border-radius:2px}
+  .dc-grid>div:last-child .dc-body>div>div:hover{background:rgba(255,255,255,0.02)}
+
+  /* Log entries hover */
+  .lc-log-entry{transition:all 0.2s ease;padding:3px 8px;border-radius:2px;cursor:default}
+  .lc-log-entry:hover{background:rgba(255,255,255,0.02)}
+  .lc-log-entry .le-msg{transition:color 0.2s}
+  .lc-log-entry:hover .le-msg{color:#fff}
+
+  /* Alert cards pulse by level */
+  .lc-alert-item{transition:all 0.3s ease;cursor:default}
+  .lc-alert-item:hover{transform:translateX(-2px)}
+  .lc-alert-item.warn{animation:alertWarnPulse 3s infinite}
+  .lc-alert-item.error{animation:alertErrPulse 2s infinite}
+  @keyframes alertWarnPulse{0%,100%{border-left-color:rgba(245,158,11,0.3)}50%{border-left-color:rgba(245,158,11,0.7)}}
+  @keyframes alertErrPulse{0%,100%{border-left-color:rgba(255,59,92,0.3)}50%{border-left-color:rgba(255,59,92,0.7)}}
+
+  /* Task queue items */
+  .lc-tq-item{transition:all 0.2s ease;cursor:default}
+  .lc-tq-item:hover{background:rgba(255,255,255,0.02)}
+  .lc-tq-item .tq-progress{transition:color 0.3s}
+
+  /* Live dot pulse enhancement */
+  .live-dot{animation:livePulse 1.2s infinite}
+  @keyframes livePulse{0%,100%{opacity:0.3;box-shadow:0 0 2px #00ff88}50%{opacity:1;box-shadow:0 0 10px #00ff88,0 0 20px rgba(0,255,136,0.4)}}
+
+  /* Pulse dot for thinking */
+  .pulse-dot{animation:thinkPulse 1s infinite}
+  @keyframes thinkPulse{0%,100%{opacity:0.4;transform:scale(0.8)}50%{opacity:1;transform:scale(1.2)}}
+
+  /* Smooth scrollbar */
+  ::-webkit-scrollbar{width:4px}
+  ::-webkit-scrollbar-track{background:rgba(255,255,255,0.02)}
+  ::-webkit-scrollbar-thumb{background:rgba(0,212,255,0.15);border-radius:2px}
+  ::-webkit-scrollbar-thumb:hover{background:rgba(0,212,255,0.3)}
+
+  /* DC Panel hover */
+  .dc-panel{transition:border-color 0.3s}
+  .dc-panel:hover{border-color:rgba(0,212,255,0.25)}
+
+  /* WB Panel hover */
+  .wb-panel{transition:border-color 0.3s}
+  .wb-panel:hover{border-color:rgba(249,115,22,0.15)}
+
+  /* LC Panel hover */
+  .lc-panel{transition:border-color 0.3s}
+  .lc-panel:hover{border-color:rgba(0,255,136,0.15)}
+
+  /* Detail item hover */
+  .detail-item{transition:all 0.2s ease;cursor:default;border-radius:2px;padding:2px 4px}
+  .detail-item:hover{background:rgba(255,255,255,0.02)}
+  .detail-item .dv{transition:color 0.2s}
+  .detail-item:hover .dv{color:#fdba74}
+
 </style>
 </head>
 <body>
@@ -1070,6 +1190,90 @@ function overlayTick(){
 // Auto-init: load first robot into detail overlay
 openRobotDetail(0);
 setInterval(overlayTick,600);
+// ==================== RICH INTERACTIONS ====================
+
+// Click ripple effect
+document.addEventListener('click',function(e){
+  const target=e.target.closest('.robot-card,.stat-card,.panel-card,.dc-stat-card,.case-info-chip,.judgment-item');
+  if(!target)return;
+  const ripple=document.createElement('span');
+  ripple.className='ripple';
+  const rect=target.getBoundingClientRect();
+  const size=Math.max(rect.width,rect.height);
+  ripple.style.width=ripple.style.height=size+'px';
+  ripple.style.left=(e.clientX-rect.left-size/2)+'px';
+  ripple.style.top=(e.clientY-rect.top-size/2)+'px';
+  target.appendChild(ripple);
+  setTimeout(()=>ripple.remove(),600);
+});
+
+// Keyboard shortcuts
+document.addEventListener('keydown',function(e){
+  if(e.target.tagName==='INPUT')return;
+  if(e.key==='1')switchTab(0);
+  else if(e.key==='2')switchTab(1);
+  else if(e.key==='3')switchTab(2);
+  else if(e.key==='Escape')closeRobotDetail();
+});
+
+// Tab switching with smooth scroll
+const _origSwitchTab=switchTab;
+switchTab=function(idx){
+  _origSwitchTab(idx);
+  // Scroll tab content to top
+  const content=document.getElementById('rdTab'+idx);
+  if(content)content.scrollTop=0;
+};
+
+// Bar chart click to toggle detail
+document.addEventListener('click',function(e){
+  const bar=e.target.closest('.dc-bar-row');
+  if(!bar)return;
+  const val=bar.querySelector('.bar-val');
+  if(val){
+    const orig=val.textContent;
+    val.textContent='👆';
+    val.style.transform='scale(1.3)';
+    setTimeout(()=>{val.textContent=orig;val.style.transform=''},400);
+  }
+});
+
+// Thought stream random glitch effect
+setInterval(()=>{
+  const stream=document.getElementById('wbLiveThought');
+  if(!stream||Math.random()>0.15)return;
+  const orig=stream.textContent.replace('|','');
+  stream.style.color='rgba(249,115,22,0.5)';
+  stream.style.transform='skewX(-2deg)';
+  setTimeout(()=>{stream.style.color='';stream.style.transform=''},150);
+},3000);
+
+// Auto-scroll log stream smoothly
+setInterval(()=>{
+  const scroll=document.querySelector('.lc-log-scroll:not(.paused)');
+  if(scroll&&scroll.scrollTop<scroll.scrollHeight){
+    scroll.scrollTop+=0.3;
+  }
+},100);
+
+// Case info chip click to show detail
+document.addEventListener('click',function(e){
+  const chip=e.target.closest('.case-info-chip');
+  if(!chip)return;
+  const val=chip.querySelector('.civ');
+  if(val)showToast('info',chip.querySelector('.cil').textContent,val.textContent,2000);
+});
+
+// Judgment item hover show more
+document.querySelectorAll('.judgment-item').forEach(item=>{
+  const label=item.querySelector('.jl');
+  const val=item.querySelector('.jv');
+  if(label&&val){
+    item.title=label.textContent+': '+val.textContent;
+  }
+});
+
+
 </script>
 </body>
 </html>

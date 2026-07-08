@@ -222,6 +222,86 @@
   .pie-tooltip .tt-val{font-family:Courier New,monospace;font-size:13px;font-weight:700}
   .pie-tooltip .tt-pct{color:var(--text-dim);font-size:9px;margin-left:6px}
 
+  /* === RICH INTERACTIVE EFFECTS === */
+  /* Robot card enhanced */
+  .robot-card{transition:all 0.3s cubic-bezier(0.4,0,0.2,1);transform-style:preserve-3d;perspective:600px}
+  .robot-card:hover{transform:translateY(-2px) scale(1.02);border-color:var(--accent);box-shadow:0 8px 28px rgba(0,212,255,0.18),0 0 0 1px rgba(0,212,255,0.15)}
+  .robot-card:active{transform:scale(0.97);transition:transform 0.1s}
+  .robot-card.working:hover{border-color:#00ff88;box-shadow:0 8px 28px rgba(0,255,136,0.18),0 0 0 1px rgba(0,255,136,0.15)}
+  .robot-card.done:hover{border-color:#f59e0b;box-shadow:0 8px 28px rgba(245,158,11,0.18),0 0 0 1px rgba(245,158,11,0.15)}
+  .robot-card .r-progress{height:3px;background:rgba(255,255,255,0.05);margin:4px 0;overflow:hidden;border-radius:2px}
+  .robot-card .r-progress-bar{height:100%;border-radius:2px;transition:width 0.6s ease-out}
+  .robot-card.working .r-progress-bar{background:linear-gradient(90deg,#00ff88,#00d4ff);animation:shimmer 2s infinite}
+  .robot-card.done .r-progress-bar{background:linear-gradient(90deg,#f59e0b,#fbbf24)}
+  .robot-card .r-meta .earned{color:#00ff88;font-weight:700;animation:earnPulse 3s infinite}
+  @keyframes shimmer{0%{filter:brightness(1)}50%{filter:brightness(1.4)}100%{filter:brightness(1)}}
+  @keyframes earnPulse{0%,100%{opacity:1}50%{opacity:0.7}}
+
+  /* Click ripple */
+  .ripple{position:absolute;border-radius:50%;background:rgba(255,255,255,0.15);transform:scale(0);animation:rippleAnim 0.6s ease-out;pointer-events:none}
+  @keyframes rippleAnim{to{transform:scale(4);opacity:0}}
+
+  /* Stats card enhanced */
+  .stat-card{transition:all 0.3s cubic-bezier(0.4,0,0.2,1);position:relative;overflow:hidden}
+  .stat-card:hover{transform:translateY(-2px);border-color:rgba(0,212,255,0.5);box-shadow:0 8px 24px rgba(0,0,0,0.3),0 0 0 1px rgba(0,212,255,0.1)}
+  .stat-card .icon{transition:all 0.3s}
+  .stat-card:hover .icon{transform:scale(1.1);box-shadow:0 0 12px rgba(0,212,255,0.2)}
+  .stat-card .info .n{transition:color 0.3s}
+  .stat-card:hover .info .n{color:#00d4ff}
+
+  /* Region header enhanced */
+  .region-header{transition:all 0.25s ease;border-radius:3px}
+  .region-header:hover{background:rgba(0,212,255,0.06);padding-left:14px}
+  .region-group.expanded .region-header{background:rgba(0,212,255,0.03);border-left:2px solid var(--accent)}
+  .region-group .expand-icon{transition:transform 0.35s cubic-bezier(0.4,0,0.2,1)}
+  .region-group.expanded .expand-icon{transform:rotate(45deg);background:rgba(0,255,136,0.15);color:#00ff88}
+  .region-body{max-height:0;overflow:hidden;transition:max-height 0.4s cubic-bezier(0.4,0,0.2,1)}
+  .region-group.expanded .region-body{max-height:2000px}
+
+  /* Header stat pulse */
+  .header-center .stat .val{transition:all 0.3s}
+  .header-center .stat .val.pulse{animation:valPulse 0.5s ease-out}
+  @keyframes valPulse{0%{transform:scale(1);color:#00d4ff}50%{transform:scale(1.2)}100%{transform:scale(1)}}
+
+  /* Sync indicator breathing */
+  .sync-dot{animation:syncBreathe 2s ease-in-out infinite}
+  @keyframes syncBreathe{0%,100%{opacity:0.4;transform:scale(1)}50%{opacity:1;transform:scale(1.5)}}
+
+  /* Status dots working */
+  .status-dots .dot.working{animation:dotPulse 1.5s infinite}
+  .status-dots .dot.online{animation:dotPulse 2s infinite}
+  @keyframes dotPulse{0%,100%{opacity:0.5;box-shadow:0 0 4px currentColor}50%{opacity:1;box-shadow:0 0 12px currentColor,0 0 20px currentColor}}
+
+  /* Panel card hover */
+  .panel-card{transition:all 0.3s ease;cursor:pointer;position:relative}
+  .panel-card:hover{border-color:rgba(0,212,255,0.4);box-shadow:0 4px 20px rgba(0,0,0,0.3)}
+  .panel-card:active{transform:scale(0.98)}
+
+  /* Thinking step timeline animation */
+  .think-step{transition:all 0.3s ease}
+  .think-step:hover{background:rgba(0,212,255,0.04);padding-left:4px}
+  .think-step .ts-progress-bar{transition:width 0.8s cubic-bezier(0.4,0,0.2,1)}
+
+  /* Earn box hover */
+  .earn-box,.token-box{transition:all 0.3s ease;cursor:default}
+  .earn-box:hover,.token-box:hover{transform:translateY(-1px)}
+  .earn-box:hover .amount{color:#00ff88}
+  .token-box:hover .amount{color:#00d4ff}
+
+  /* Smooth scrollbar */
+  ::-webkit-scrollbar{width:4px}
+  ::-webkit-scrollbar-track{background:rgba(255,255,255,0.02)}
+  ::-webkit-scrollbar-thumb{background:rgba(0,212,255,0.15);border-radius:2px}
+  ::-webkit-scrollbar-thumb:hover{background:rgba(0,212,255,0.3)}
+
+  /* Pie wrap tooltip trigger zone */
+  .pie-wrap{position:relative}
+  .pie-wrap::after{content:'🖱 悬停交互';position:absolute;bottom:-14px;left:50%;transform:translateX(-50%);font-size:7px;color:rgba(136,153,180,0.3);pointer-events:none;transition:opacity 0.5s}
+  .pie-wrap:hover::after{opacity:0}
+
+  /* Counter number transition */
+  .n{transition:all 0.3s ease}
+
 </style>
 </head>
 <body>
@@ -818,6 +898,99 @@ renderFeed();renderRegions();updateStats();drawPieChart();drawRegionPie();render
 setInterval(tick,1000);
 setInterval(syncFromStorage,2000);
 tick();syncFromStorage();
+// ==================== RICH INTERACTIONS ====================
+
+// Click ripple effect
+document.addEventListener('click',function(e){
+  const target=e.target.closest('.robot-card,.stat-card,.panel-card,.btn-login');
+  if(!target)return;
+  const ripple=document.createElement('span');
+  ripple.className='ripple';
+  const rect=target.getBoundingClientRect();
+  const size=Math.max(rect.width,rect.height);
+  ripple.style.width=ripple.style.height=size+'px';
+  ripple.style.left=(e.clientX-rect.left-size/2)+'px';
+  ripple.style.top=(e.clientY-rect.top-size/2)+'px';
+  target.appendChild(ripple);
+  setTimeout(()=>ripple.remove(),600);
+});
+
+// Number counting animation
+function animateNumber(el,targetVal,prefix,decimals){
+  const current=parseFloat(el.textContent.replace(/[^0-9.]/g,''))||0;
+  if(Math.abs(current-targetVal)<0.5){el.textContent=(prefix||'')+targetVal.toFixed(decimals||0);return}
+  const start=performance.now(),duration=600;
+  function step(ts){
+    const progress=Math.min((ts-start)/duration,1);
+    const eased=1-Math.pow(1-progress,3);
+    const val=current+(targetVal-current)*eased;
+    el.textContent=(prefix||'')+(decimals?val.toFixed(decimals):Math.floor(val));
+    if(progress<1)requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+// Enhanced updateStats with counting animation
+const _origUpdateStats=updateStats;
+updateStats=function(){
+  _origUpdateStats();
+  // Animate header stats
+  const tasksEl=document.getElementById('totalTasks');
+  if(tasksEl&&!tasksEl._initDone){animateNumber(tasksEl,totalTasksCompleted||247,'',0);tasksEl._initDone=true}
+};
+
+// Robot card hover tilt (subtle 3D)
+document.addEventListener('mousemove',function(e){
+  const card=e.target.closest('.robot-card');
+  if(!card)return;
+  const rect=card.getBoundingClientRect();
+  const x=(e.clientX-rect.left)/rect.width-0.5;
+  const y=(e.clientY-rect.top)/rect.height-0.5;
+  card.style.transform='perspective(400px) rotateY('+(x*4)+'deg) rotateX('+(-y*4)+'deg) translateY(-2px) scale(1.02)';
+});
+document.addEventListener('mouseout',function(e){
+  const card=e.target.closest('.robot-card');
+  if(card)card.style.transform='';
+});
+
+// Stat card icon bounce on hover
+document.querySelectorAll('.stat-card').forEach(card=>{
+  card.addEventListener('mouseenter',function(){
+    const icon=this.querySelector('.icon');
+    if(icon){icon.style.transform='scale(1.15) rotate(-5deg)';icon.style.transition='all 0.3s cubic-bezier(0.4,0,0.2,1)'}
+  });
+  card.addEventListener('mouseleave',function(){
+    const icon=this.querySelector('.icon');
+    if(icon){icon.style.transform='';icon.style.transition='all 0.3s'}
+  });
+});
+
+// Logout button shake on hover
+const logoutBtn=document.querySelector('.user-badge');
+if(logoutBtn){
+  logoutBtn.addEventListener('mouseenter',function(){this.style.animation='shake 0.5s ease'});
+  logoutBtn.addEventListener('mouseleave',function(){this.style.animation=''});
+  logoutBtn.addEventListener('animationend',function(){this.style.animation=''});
+}
+
+// Keyboard shortcut: ESC to close overlays, 1/2/3 to switch tabs
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape'){
+    const overlays=document.querySelectorAll('[id$="Overlay"]');
+    overlays.forEach(o=>{if(o.classList.contains('open'))o.classList.remove('open')});
+  }
+});
+
+// Auto-expand first region with stagger animation
+setTimeout(()=>{
+  document.querySelectorAll('.region-group').forEach((g,i)=>{
+    if(!g.classList.contains('expanded')){
+      setTimeout(()=>{g.classList.add('expanded')},i*80);
+    }
+  });
+},500);
+
+
 </script>
 </body>
 </html>
