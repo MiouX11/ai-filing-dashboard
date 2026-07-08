@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>AI 批量立案监控平台 · 总控中心</title>
+<style>
+  :root{--bg:#060b14;--card-bg:#0d1525;--border:#1a2740;--accent:#00d4ff;--accent2:#7c3aed;--work:#00ff88;--done:#f59e0b;--standby:#64748b;--text:#e2e8f0;--text-dim:#8899b4;--danger:#ff3b5c;--debt:#f97316}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--text);font-family:'Segoe UI','PingFang SC','Microsoft YaHei',monospace;min-height:100vh;overflow-x:hidden}
+  #bgCanvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0}
+  .scanlines{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.03) 2px,rgba(0,0,0,0.03) 4px)}
+  .scan-beam{position:fixed;top:0;left:0;width:100%;height:2px;pointer-events:none;z-index:1;background:linear-gradient(90deg,transparent,rgba(0,212,255,0.12),transparent);animation:scanDown 8s linear infinite}
+  @keyframes scanDown{0%{top:0}100%{top:100%}}
+  .app{position:relative;z-index:2;max-width:2560px;margin:0 auto;padding:10px 20px;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+
+  /* LOGIN */
+  .login-overlay{position:fixed;top:0;left:0;width:100%;height:100%;z-index:10000;background:rgba(6,11,20,0.97);backdrop-filter:blur(20px);display:flex;align-items:center;justify-content:center;transition:opacity 0.5s,visibility 0.5s}
+  .login-overlay.hidden{opacity:0;visibility:hidden;pointer-events:none}
+  .login-box{background:rgba(13,21,37,0.98);border:1px solid var(--border);padding:40px 50px;width:420px;max-width:90vw;position:relative;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.7)}
+  .login-box::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent),var(--debt),transparent)}
+  .login-box h2{text-align:center;font-size:18px;font-weight:700;color:var(--text);margin-bottom:4px;letter-spacing:2px}
+  .login-box .login-sub{text-align:center;font-size:10px;color:var(--text-dim);margin-bottom:28px}
+  .login-box .field{margin-bottom:18px}
+  .login-box .field label{display:block;font-size:9px;color:var(--text-dim);margin-bottom:6px;letter-spacing:1px;text-transform:uppercase}
+  .login-box .field input{width:100%;padding:12px 14px;font-size:14px;background:rgba(0,0,0,0.4);border:1px solid var(--border);color:var(--text);font-family:'Courier New',monospace;outline:none;transition:border-color 0.3s,box-shadow 0.3s}
+  .login-box .field input:focus{border-color:var(--accent);box-shadow:0 0 15px rgba(0,212,255,0.15)}
+  .login-box .btn-login{width:100%;padding:12px;font-size:14px;font-weight:700;background:linear-gradient(135deg,var(--accent),#0284c7);color:#fff;border:none;cursor:pointer;letter-spacing:2px;transition:all 0.3s;font-family:'Courier New',monospace}
+  .login-box .btn-login:hover{box-shadow:0 0 25px rgba(0,212,255,0.4);transform:translateY(-1px)}
+  .login-box .login-error{text-align:center;font-size:10px;color:var(--danger);margin-top:12px;min-height:16px}
+  .login-shake{animation:shake 0.5s ease}
+  @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+  @keyframes eyeBlink{0%,95%,100%{transform:scaleY(1)}97%{transform:scaleY(0.1)}}
+
+  /* HEADER */
+  .header{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;flex-shrink:0;background:rgba(13,21,37,0.9);backdrop-filter:blur(16px);border:1px solid var(--border);margin-bottom:8px;position:relative;overflow:hidden}
+  .header::before{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--accent),var(--debt),transparent);opacity:0.6}
+  .header-left{display:flex;align-items:center;gap:10px}
+  .logo{width:38px;height:38px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#060b14}
+  .logo::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,0.2),transparent 60%);pointer-events:none;position:relative}
+  .title-group{display:flex;flex-direction:column;gap:1px}
+  .title-group h1{font-size:15px;font-weight:600;letter-spacing:1px;color:#e2e8f0}
+  .title-group .sub{font-size:9px;color:var(--text-dim)}
+  .header-center{display:flex;gap:18px;font-size:11px;color:var(--text-dim)}
+  .header-center .stat{text-align:center}
+  .header-center .stat .val{font-size:18px;font-weight:700;color:var(--text);font-family:'Courier New',monospace}
+  .header-right{display:flex;gap:10px;align-items:center}
+  .earn-box{background:rgba(0,255,136,0.05);border:1px solid rgba(0,255,136,0.2);padding:8px 14px;overflow:hidden}
+  .earn-box .label{font-size:9px;color:#5efaa8}
+  .earn-box .amount{font-size:22px;font-weight:800;font-family:'Courier New',monospace;background:linear-gradient(135deg,#4ade80,#00ff88);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  .earn-box .rate{font-size:9px;color:var(--text-dim);margin-top:1px}
+  .token-box{background:rgba(0,212,255,0.05);border:1px solid rgba(0,212,255,0.2);padding:8px 14px;overflow:hidden}
+  .token-box .label{font-size:9px;color:#7dd3fc}
+  .token-box .amount{font-size:22px;font-weight:800;font-family:'Courier New',monospace;background:linear-gradient(135deg,#7dd3fc,#00d4ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  .token-box .rate{font-size:9px;color:var(--text-dim);margin-top:1px}
+  .status-dots{display:flex;gap:10px;font-size:10px}
+  .status-dots .dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:3px}
+  .dot.working{background:var(--work);box-shadow:0 0 8px var(--work);animation:dotPulse 1.5s infinite}
+  @keyframes dotPulse{0%,100%{opacity:1}50%{opacity:0.5}}
+  .dot.done{background:var(--done);box-shadow:0 0 6px var(--done)}
+  .dot.standby{background:var(--standby)}
+  .dot.online{background:var(--accent);box-shadow:0 0 8px var(--accent);animation:dotPulse 2s infinite}
+  .user-badge{display:flex;align-items:center;gap:6px;font-size:9px;color:var(--text-dim);padding:4px 10px;border:1px solid var(--border);cursor:pointer}
+  .user-badge:hover{border-color:var(--danger);color:var(--danger)}
+  .user-badge .user-dot{width:6px;height:6px;background:var(--work);border-radius:50%}
+
+  /* STATS */
+  .stats-bar{display:flex;gap:7px;margin-bottom:7px;flex-shrink:0}
+  .stat-card{flex:1;background:rgba(13,21,37,0.8);border:1px solid var(--border);padding:8px 12px;display:flex;align-items:center;gap:8px;transition:all 0.3s}
+  .stat-card:hover{border-color:rgba(0,212,255,0.3)}
+  .stat-card .icon{width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-size:14px;background:rgba(0,212,255,0.06);border:1px solid rgba(0,212,255,0.1)}
+  .stat-card .info .n{font-size:20px;font-weight:700;font-family:'Courier New',monospace}
+  .stat-card .info .l{font-size:9px;color:var(--text-dim)}
+
+  /* MAIN */
+  .main-content{flex:1;display:flex;gap:8px;min-height:0}
+  .left-panel{width:280px;flex-shrink:0;display:flex;flex-direction:column;gap:6px;min-height:0}
+  .panel-card{background:rgba(13,21,37,0.8);border:1px solid var(--border);padding:7px 10px;flex-shrink:0}
+  .panel-card h4{font-size:9px;color:var(--text-dim);margin-bottom:4px;display:flex;align-items:center;gap:5px}
+  .pie-wrap{position:relative;width:100px;height:100px;margin:0 auto}
+  .pie-wrap canvas{width:100px;height:100px}
+  .pie-legend{margin-top:3px}
+  .pie-legend .item{display:flex;align-items:center;justify-content:space-between;font-size:7.5px;padding:0.5px 0;color:var(--text-dim)}
+  .pie-legend .item .swatch{display:inline-block;width:6px;height:6px;margin-right:3px}
+  .pie-legend .item .pct{color:var(--text);font-weight:600;font-family:'Courier New',monospace}
+  .completion-feed{flex:1;min-height:0;background:rgba(13,21,37,0.9);border:1px solid var(--border);padding:0;display:flex;flex-direction:column;overflow:hidden}
+  .completion-feed::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--work),transparent);z-index:1;opacity:0.5;position:relative}
+  .completion-feed .feed-header{padding:5px 11px;display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--border);background:rgba(0,255,136,0.02);flex-shrink:0}
+  .completion-feed .feed-header h4{font-size:9px;color:var(--text-dim);display:flex;align-items:center;gap:5px;margin:0}
+  .flow-indicator{width:5px;height:5px;background:var(--work);border-radius:50%;animation:dotPulse 1s infinite}
+  .completion-feed .feed-body{flex:1;overflow:hidden;position:relative}
+  .completion-feed .feed-scroll{animation:scrollUp 18s linear infinite}
+  .completion-feed .feed-scroll.paused{animation-play-state:paused}
+  @keyframes scrollUp{0%{transform:translateY(0)}100%{transform:translateY(-50%)}}
+  .feed-item{display:flex;align-items:center;gap:2px 5px;padding:2.5px 11px;font-size:8px;border-bottom:1px solid rgba(255,255,255,0.02)}
+  .feed-item:hover{background:rgba(0,212,255,0.04)}
+  .feed-item .fi-time{color:#475569;font-family:'Courier New',monospace;font-size:7px;min-width:48px}
+  .feed-item .fi-robot{color:var(--debt);font-family:'Courier New',monospace;font-weight:600;font-size:8px}
+  .feed-item .fi-case{color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:40px;font-size:7px}
+  .feed-item .fi-amount{color:#fbbf24;font-size:7px}
+  .feed-item .fi-badge{font-size:6px;padding:1px 4px;background:rgba(0,255,136,0.1);color:#00ff88}
+  .feed-item .fi-money{color:var(--work);font-weight:700;font-family:'Courier New',monospace;margin-left:auto;font-size:8px}
+  .feed-item .fi-user{color:var(--accent);font-size:7px}
+
+  /* CENTER / RIGHT */
+  .center-panel{flex:1;display:flex;flex-direction:column;min-width:0;overflow-y:auto;padding-right:4px;gap:6px}
+  .region-group{background:rgba(13,21,37,0.8);border:1px solid var(--border);overflow:hidden}
+  .region-group.expanded{border-color:rgba(0,212,255,0.25)}
+  .region-header{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;transition:background 0.25s;user-select:none}
+  .region-header:hover{background:rgba(0,212,255,0.04)}
+  .region-header .expand-icon{width:18px;height:18px;background:rgba(0,212,255,0.1);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;transition:transform 0.3s;flex-shrink:0}
+  .region-group.expanded .expand-icon{transform:rotate(90deg)}
+  .region-header .region-name{font-size:13px;font-weight:600;color:var(--text)}
+  .region-header .region-stats{display:flex;gap:10px;margin-left:auto;font-size:9px;color:var(--text-dim)}
+  .region-header .region-stats span{display:flex;align-items:center;gap:3px}
+  .region-header .region-stats .rs-dot{width:5px;height:5px;border-radius:50%}
+  .region-header .region-total-debt{font-size:10px;color:var(--debt);font-weight:600;margin-left:10px}
+  .region-body{display:none;padding:0 10px 10px 10px}
+  .region-group.expanded .region-body{display:block}
+  .region-robots{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:5px}
+
+  .robot-card{background:var(--card-bg);border:1px solid var(--border);padding:9px 10px;transition:all 0.25s;position:relative;overflow:hidden;cursor:pointer}
+  .robot-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,212,255,0.08),transparent)}
+  .robot-card:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,0.5)}
+  .robot-card.working{border-left:2px solid var(--work)}
+  .robot-card.done{border-left:2px solid var(--done);opacity:0.7}
+  .robot-card.standby{border-left:2px solid var(--standby);opacity:0.5}
+  .robot-card.claimed{border-left:2px solid var(--accent);box-shadow:0 0 15px rgba(0,212,255,0.15)}
+  .robot-card .r-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+  .robot-card .r-name{font-size:10px;font-weight:600;font-family:'Courier New',monospace}
+  .robot-card .r-status{font-size:7px;padding:1px 6px}
+  .r-status.s-working{background:rgba(0,255,136,0.15);color:#00ff88}
+  .r-status.s-done{background:rgba(245,158,11,0.15);color:#fbbf24}
+  .r-status.s-standby{background:rgba(100,116,139,0.15);color:#9ca3af}
+  .robot-card .r-amount{font-size:8px;color:var(--debt);margin:3px 0}
+  .robot-card .r-progress{height:2px;background:rgba(255,255,255,0.04);margin:3px 0;overflow:hidden}
+  .robot-card .r-progress-bar{height:100%;transition:width 1s linear}
+  .robot-card.working .r-progress-bar{background:linear-gradient(90deg,#00ff88,#00d4ff);box-shadow:0 0 6px rgba(0,255,136,0.3)}
+  .robot-card.done .r-progress-bar{background:linear-gradient(90deg,#f59e0b,#fbbf24)}
+  .robot-card .r-meta{display:flex;justify-content:space-between;font-size:8px;color:var(--text-dim)}
+  .robot-card .r-meta .earned{color:#00ff88;font-weight:600}
+  .robot-card .r-controller{font-size:7px;color:var(--accent);margin-top:2px;display:flex;align-items:center;gap:3px}
+  .robot-card .r-controller .ctrl-dot{width:4px;height:4px;background:var(--accent);border-radius:50%;animation:dotPulse 1.5s infinite}
+  .robot-card.working::after{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:radial-gradient(circle at 50% 0%,rgba(0,255,136,0.05),transparent 60%);animation:cardGlow 2.5s ease-in-out infinite;pointer-events:none}
+  @keyframes cardGlow{0%,100%{opacity:0.3}50%{opacity:1}}
+  .robot-card.flash{animation:flashEarn 0.5s ease-out}
+  @keyframes flashEarn{0%{border-color:var(--accent);box-shadow:0 0 25px rgba(0,212,255,0.5)}100%{border-color:var(--border);box-shadow:none}}
+
+  /* BOTTOM */
+  .bottom-area{flex-shrink:0;margin-top:7px}
+  .log-panel{background:rgba(13,21,37,0.8);border:1px solid var(--border);padding:7px 12px;max-height:85px;overflow-y:auto}
+  .log-panel h4{font-size:10px;margin-bottom:4px;color:var(--text-dim);display:flex;align-items:center;gap:5px}
+  .live-dot{width:5px;height:5px;background:var(--danger);border-radius:50%;animation:liveBlink 0.8s infinite}
+  @keyframes liveBlink{0%,100%{opacity:1}50%{opacity:0.3}}
+  .log-entry{font-size:8px;padding:1.5px 0;border-bottom:1px solid rgba(255,255,255,0.02);color:var(--text-dim);display:flex;gap:5px}
+  .log-entry .time{color:#475569;white-space:nowrap;font-family:'Courier New',monospace}
+  .log-entry .msg{flex:1}
+  .log-entry .money{color:var(--work);font-weight:600;white-space:nowrap;font-family:'Courier New',monospace}
+
+  /* SYNC STATUS */
+  .sync-indicator{display:flex;align-items:center;gap:6px;font-size:8px;color:var(--text-dim)}
+  .sync-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);box-shadow:0 0 6px var(--accent);animation:dotPulse 2s infinite}
+  .sync-dot.error{background:var(--danger);animation:none}
+
+  ::-webkit-scrollbar{width:3px}
+  ::-webkit-scrollbar-track{background:transparent}
+  ::-webkit-scrollbar-thumb{background:rgba(0,212,255,0.15)}
+
+  @media(max-width:1200px){.header{flex-wrap:wrap;gap:8px;padding:8px 12px}.header-center{display:none}.stats-bar{flex-wrap:wrap;gap:4px}.stat-card{min-width:calc(33% - 4px)}.main-content{flex-direction:column}.left-panel{width:100%;flex-direction:row;gap:6px;min-height:auto}.center-panel{max-height:none}.region-robots{grid-template-columns:repeat(auto-fill,minmax(130px,1fr))}}
+  @media(max-width:768px){.app{padding:4px 5px}.header{padding:6px 10px}.title-group h1{font-size:13px}.stat-card{min-width:calc(50% - 3px);padding:6px 8px}.stat-card .info .n{font-size:16px}.robot-card{padding:6px}.robot-card .r-name{font-size:9px}.region-robots{grid-template-columns:repeat(auto-fill,minmax(105px,1fr))}}
+</style>
+</head>
+<body>
+<canvas id="bgCanvas"></canvas>
+<div class="scanlines"></div>
+<div class="scan-beam"></div>
+
+<!-- LOGIN -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-box" id="loginBox">
+    <div style="text-align:center;font-size:48px;margin-bottom:12px;">🖥️</div>
+    <h2>AI 批量立案监控平台</h2>
+    <div class="login-sub">总控中心 · 实时监控所有AI机器人</div>
+    <div class="field"><label>用户名称</label><input type="text" id="loginName" placeholder="请输入用户名称" autocomplete="off"></div>
+    <div class="field"><label>访问密码</label><input type="password" id="loginPass" placeholder="请输入访问密码"></div>
+    <button class="btn-login" onclick="doLogin()">登 录 总 控</button>
+    <div class="login-error" id="loginError"></div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div class="app" id="mainApp">
+  <div class="header">
+    <div class="header-left">
+      <div class="logo"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="2" y="2" width="20" height="20" rx="3" stroke="#060b14" stroke-width="2.5"/><line x1="7" y1="7" x2="17" y2="7" stroke="#060b14" stroke-width="2"/><line x1="7" y1="12" x2="17" y2="12" stroke="#060b14" stroke-width="2"/><line x1="7" y1="17" x2="13" y2="17" stroke="#060b14" stroke-width="2"/></svg></div>
+      <div class="title-group"><h1>AI 批量立案监控平台 · 总控中心</h1><span class="sub">智能案卷处理 v5.0 · 100个AI机器人实时在线 · 小额欠款纠纷全自动立案</span></div>
+    </div>
+    <div class="header-center">
+      <div class="stat"><div class="val" id="totalTasks">0</div><span style="font-size:9px;">完成任务</span></div>
+      <div class="stat"><div class="val" id="onlineUsers">0</div><span style="font-size:9px;">在线用户</span></div>
+      <div class="stat"><div class="val" id="claimedRobots">0</div><span style="font-size:9px;">已分配机器人</span></div>
+    </div>
+    <div class="header-right">
+      <div class="earn-box"><div class="label">E 累计收益</div><div class="amount" id="totalEarnings">¥0</div><div class="rate" id="totalTasksSmall">0 个任务</div></div>
+      <div class="token-box"><div class="label">S 累计Token</div><div class="amount" id="totalTokens">0</div><div class="rate">K tokens</div></div>
+      <div class="status-dots">
+        <div><span class="dot working"></span>工作 <b id="cntWorking">0</b></div>
+        <div><span class="dot done"></span>完结 <b id="cntDone">0</b></div>
+        <div><span class="dot standby"></span>待命 <b id="cntStandby">0</b></div>
+        <div><span class="dot online"></span>在线 <b id="cntClaimed">0</b></div>
+      </div>
+      <div class="sync-indicator"><span class="sync-dot" id="syncDot"></span><span id="syncText">实时同步</span></div>
+      <div class="user-badge" onclick="doLogout()"><span class="user-dot"></span><span id="currentUser">--</span></div>
+    </div>
+  </div>
+
+  <div class="stats-bar">
+    <div class="stat-card"><div class="icon">📋</div><div class="info"><div class="n" id="casesFiled">0</div><div class="l">已立案数</div></div></div>
+    <div class="stat-card"><div class="icon">💰</div><div class="info"><div class="n" id="totalDebt">¥0</div><div class="l">累计追偿标的</div></div></div>
+    <div class="stat-card"><div class="icon">⏱</div><div class="info"><div class="n" id="avgTime">19.8min</div><div class="l">平均立案耗时</div></div></div>
+    <div class="stat-card"><div class="icon">📊</div><div class="info"><div class="n" id="avgDebt">¥0</div><div class="l">平均欠款金额</div></div></div>
+    <div class="stat-card"><div class="icon">🏛</div><div class="info"><div class="n" id="courts">10</div><div class="l">对接区域法院</div></div></div>
+  </div>
+
+  <div class="main-content">
+    <div class="left-panel">
+      <div class="panel-card"><h4>📊 欠款类型分布</h4><div class="pie-wrap"><canvas id="pieCanvas" width="100" height="100"></canvas></div><div class="pie-legend" id="pieLegend"></div></div>
+      <div class="panel-card"><h4>🏛️ 区域法院分布</h4><div class="pie-wrap"><canvas id="regionPieCanvas" width="100" height="100"></canvas></div><div class="pie-legend" id="regionPieLegend"></div></div>
+      <div class="completion-feed" id="completionFeed"
+           onmouseenter="this.querySelector('.feed-scroll').classList.add('paused')"
+           onmouseleave="this.querySelector('.feed-scroll').classList.remove('paused')">
+        <div class="feed-header"><h4><span class="flow-indicator"></span>完成状态 · 实时滚动</h4></div>
+        <div class="feed-body"><div class="feed-scroll" id="feedScroll"></div></div>
+      </div>
+    </div>
+    <div class="center-panel" id="regionPanel"></div>
+  </div>
+
+  <div class="bottom-area">
+    <div class="log-panel" id="logPanel"><h4><span class="live-dot"></span>实时同步日志</h4><div id="logEntries"></div></div>
+  </div>
+</div>
+<script>
+// ==================== BACKGROUND ====================
+const bgCanvas=document.getElementById('bgCanvas'),bgCtx=bgCanvas.getContext('2d');
+let bgW,bgH;
+function resizeBg(){bgW=bgCanvas.width=window.innerWidth;bgH=bgCanvas.height=window.innerHeight}
+resizeBg();window.addEventListener('resize',resizeBg);
+const HEX_SIZE=28,hexPoints=[];
+let gridOffset=0;
+(function gen(){const w=HEX_SIZE*1.5,h=HEX_SIZE*Math.sqrt(3);for(let r=-1;r<Math.ceil(bgH/h)+1;r++)for(let c=-1;c<Math.ceil(bgW/w)+1;c++)hexPoints.push({x:c*w+(r%2?w/2:0),y:r*h})})();
+function drawHex(ctx,x,y,size,alpha){ctx.beginPath();for(let i=0;i<6;i++){const a=(Math.PI/3)*i-Math.PI/6;(i===0?ctx.moveTo:ctx.lineTo).call(ctx,x+size*Math.cos(a),y+size*Math.sin(a))}ctx.closePath();ctx.strokeStyle='rgba(0,212,255,'+alpha+')';ctx.lineWidth=0.5;ctx.stroke()}
+const isMobile=window.innerWidth<768;
+const dps=[];for(let i=0;i<(isMobile?20:60);i++){dps.push({x:Math.random()*bgW,y:Math.random()*bgH,size:Math.random()*1.5+0.5,speed:Math.random()*0.6+0.2,opacity:Math.random()*0.5+0.15,trail:[],maxTrail:Math.floor(Math.random()*12)+4,color:Math.random()<0.5?'0,212,255':'0,255,136'})}
+let lastBgDraw=0;
+function drawBg(ts){if(isMobile&&ts-lastBgDraw<80){requestAnimationFrame(drawBg);return}lastBgDraw=ts;bgCtx.clearRect(0,0,bgW,bgH);gridOffset=(gridOffset+0.06)%(HEX_SIZE*Math.sqrt(3));if(!isMobile)for(const hp of hexPoints){const dy=(hp.y+gridOffset)%(bgH+HEX_SIZE*3)-HEX_SIZE*1.5;if(dy<-HEX_SIZE||dy>bgH+HEX_SIZE)continue;drawHex(bgCtx,hp.x,dy,HEX_SIZE*0.85,0.03+0.025*Math.sin(hp.c*0.5+hp.r*0.7))}for(const p of dps){p.y+=p.speed;if(p.y>bgH+20){p.y=-20;p.x=Math.random()*bgW;p.trail=[]}p.trail.push({x:p.x,y:p.y,life:1});if(p.trail.length>p.maxTrail)p.trail.shift();for(const t of p.trail){t.life-=0.06;if(t.life>0){bgCtx.beginPath();bgCtx.arc(t.x,t.y,p.size*0.7,0,Math.PI*2);bgCtx.fillStyle='rgba('+p.color+','+(t.life*p.opacity*0.6)+')';bgCtx.fill()}}bgCtx.beginPath();bgCtx.arc(p.x,p.y,p.size,0,Math.PI*2);bgCtx.fillStyle='rgba('+p.color+','+p.opacity+')';bgCtx.fill()}requestAnimationFrame(drawBg)}requestAnimationFrame(drawBg);
+
+// ==================== LOGIN ====================
+const VALID_PASSWORD='JUDai888';let currentUser='';
+function doLogin(){const n=document.getElementById('loginName').value.trim();const p=document.getElementById('loginPass').value;const err=document.getElementById('loginError');const box=document.getElementById('loginBox');if(!n){err.textContent='请输入用户名称';box.classList.add('login-shake');setTimeout(()=>box.classList.remove('login-shake'),500);return}if(p!==VALID_PASSWORD){err.textContent='密码错误';box.classList.add('login-shake');setTimeout(()=>box.classList.remove('login-shake'),500);return}currentUser=n;document.getElementById('currentUser').textContent=n;document.getElementById('loginOverlay').classList.add('hidden');registerUser(n);try{sessionStorage.setItem('master_user',n)}catch(e){}}
+function doLogout(){if(confirm('确定退出？')){unregisterUser(currentUser);currentUser='';document.getElementById('loginOverlay').classList.remove('hidden');try{sessionStorage.removeItem('master_user')}catch(e){}}}
+document.getElementById('loginPass').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin()});
+document.getElementById('loginName').addEventListener('keydown',function(e){if(e.key==='Enter')document.getElementById('loginPass').focus()});
+try{const s=sessionStorage.getItem('master_user');if(s){currentUser=s;document.getElementById('currentUser').textContent=s;document.getElementById('loginOverlay').classList.add('hidden');registerUser(s)}}catch(e){}
+
+// ==================== DATA ====================
+const regions=[{name:'北京地区法院',robots:10,district:'京'},{name:'上海地区法院',robots:10,district:'沪'},{name:'广东地区法院',robots:10,district:'粤'},{name:'浙江地区法院',robots:10,district:'浙'},{name:'江苏地区法院',robots:10,district:'苏'},{name:'四川地区法院',robots:10,district:'川'},{name:'湖北地区法院',robots:10,district:'鄂'},{name:'山东地区法院',robots:10,district:'鲁'},{name:'河南地区法院',robots:10,district:'豫'},{name:'福建地区法院',robots:10,district:'闽'}];
+const debtTypes=['民间借贷纠纷','消费金融欠款','信用卡透支纠纷','小额贷款追偿','赊购货款纠纷','物业服务费欠缴','租金拖欠纠纷','劳务报酬追索','医疗费欠款纠纷','网络借贷纠纷'];
+const prefixes=['天秤','法眼','智审','裁决','明镜','铁案','擎天','浩然','青天','正义'];
+const caseColors=['#f97316','#ef4444','#f59e0b','#84cc16','#06b6d4','#8b5cf6','#ec4899','#22c55e','#6366f1','#00d4ff'];
+const regionColors=['#8b5cf6','#06b6d4','#f59e0b','#00ff88','#ef4444','#ec4899','#22c55e','#f97316','#6366f1','#84cc16'];
+function makeRobotName(ri,rj){return regions[ri].district+'-'+prefixes[ri%10]+'-'+String(rj+1).padStart(2,'0')}
+function randDebt(){return Math.floor(Math.random()*9400+500)}
+function formatMoney(n){return '¥'+n.toFixed(2)}
+
+// ==================== LOCALSTORAGE SYNC ====================
+const STORAGE_KEY_ROBOTS='dash_robots';
+const STORAGE_KEY_USERS='dash_users';
+const STORAGE_KEY_LOGS='dash_logs';
+const STORAGE_KEY_COMPLETIONS='dash_completions';
+
+let robots=[];
+let totalEarnings=0,totalTasksCompleted=0,totalDebtAmount=0,totalTokensK=120;
+let completionEntries=[],logEntries=[];
+let expandedRegions=new Set([0]);
+
+// Init robots from localStorage or create fresh
+function initRobots(){
+  try{
+    const stored=localStorage.getItem(STORAGE_KEY_ROBOTS);
+    if(stored){
+      robots=JSON.parse(stored);
+      // Recalc totals
+      totalTasksCompleted=robots.filter(r=>r.status==='done').length;
+      totalDebtAmount=robots.reduce((s,r)=>r.status==='done'?s+r.debtAmount:s,0);
+      totalEarnings=robots.reduce((s,r)=>s+(r.earned||0),0)+1250;
+      return true;
+    }
+  }catch(e){}
+  // Create fresh
+  const assignedDebtTypes=[];
+  for(let i=0;i<100;i++)assignedDebtTypes.push(debtTypes[i%10]);
+  let idx=0;
+  regions.forEach((reg,ri)=>{for(let j=0;j<reg.robots;j++){const name=makeRobotName(ri,j);const debtAmt=randDebt();const rand=Math.random();let status=rand<0.78?'working':rand<0.94?'done':'standby';const progress=status==='done'?100:status==='standby'?0:Math.floor(Math.random()*90)+5;const earned=status==='done'?5:(status==='working'?Math.floor(progress/100*5*100)/100:0);robots.push({id:idx,name,region:ri,status,progress,lastTaskTime:Date.now()-Math.random()*20*60*1000,earned,debtAmount:debtAmt,caseType:assignedDebtTypes[idx],caseCount:Math.floor(Math.random()*8)+1,thinkingStep:Math.floor(Math.random()*6),controller:null,controllerLoginTime:null});idx++}});
+  totalEarnings=robots.reduce((s,r)=>s+(r.earned||0),0)+1250;
+  totalTasksCompleted=robots.filter(r=>r.status==='done').length;
+  saveRobots();
+  return false;
+}
+
+function saveRobots(){try{localStorage.setItem(STORAGE_KEY_ROBOTS,JSON.stringify(robots))}catch(e){}}
+
+function getUsers(){try{const s=localStorage.getItem(STORAGE_KEY_USERS);return s?JSON.parse(s):[]}catch(e){return[]}}
+function saveUsers(users){try{localStorage.setItem(STORAGE_KEY_USERS,JSON.stringify(users))}catch(e){}}
+function registerUser(name){const users=getUsers().filter(u=>u.name!==name);users.push({name,loginTime:Date.now(),type:'master'});saveUsers(users)}
+function unregisterUser(name){const users=getUsers().filter(u=>u.name!==name);saveUsers(users)}
+
+function getLogs(){try{const s=localStorage.getItem(STORAGE_KEY_LOGS);return s?JSON.parse(s):[]}catch(e){return[]}}
+function saveLogs(logs){try{localStorage.setItem(STORAGE_KEY_LOGS,JSON.stringify(logs.slice(-200)))}catch(e){}}
+function addLog(robotName,caseType,debtAmt,earned,userName){
+  const logs=getLogs();
+  logs.push({time:new Date().toTimeString().slice(0,8),robot:robotName,case:caseType,debt:debtAmt,money:earned,user:userName||''});
+  saveLogs(logs);
+  logEntries=logs;
+  renderLogs();
+}
+
+function getCompletions(){try{const s=localStorage.getItem(STORAGE_KEY_COMPLETIONS);return s?JSON.parse(s):[]}catch(e){return[]}}
+function saveCompletions(comps){try{localStorage.setItem(STORAGE_KEY_COMPLETIONS,JSON.stringify(comps.slice(-300)))}catch(e){}}
+function addCompletion(robotName,caseType,debtAmt,userName){
+  const comps=getCompletions();
+  comps.push({time:new Date().toTimeString().slice(0,8),robot:robotName,case:caseType,amount:'¥'+debtAmt,money:'+¥5.00',user:userName||''});
+  saveCompletions(comps);
+  completionEntries=comps;
+  renderFeed();
+}
+
+// ==================== RENDER ====================
+function renderFeed(){
+  const entries=completionEntries.length>0?completionEntries:getCompletions();
+  if(entries.length===0){
+    // Seed initial
+    for(let i=0;i<60;i++){const h=Math.floor(Math.random()*24),m=Math.floor(Math.random()*60);entries.push({time:String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(Math.floor(Math.random()*60)).padStart(2,'0'),robot:makeRobotName(Math.floor(Math.random()*10),Math.floor(Math.random()*10)),case:debtTypes[Math.floor(Math.random()*10)],amount:'¥'+randDebt(),money:'+¥5.00',user:''})}
+    saveCompletions(entries);completionEntries=entries;
+  }
+  const html=entries.map(e=>'<div class="feed-item"><span class="fi-time">'+e.time+'</span><span class="fi-robot">'+e.robot+'</span><span class="fi-case">'+e.case+'</span><span class="fi-amount">'+e.amount+'</span><span class="fi-badge">完成</span><span class="fi-money">'+e.money+'</span>'+(e.user?'<span class="fi-user">'+e.user+'</span>':'')+'</div>').join('');
+  document.getElementById('feedScroll').innerHTML=html+html;
+}
+
+function renderLogs(){
+  const logs=logEntries.length>0?logEntries:getLogs();
+  document.getElementById('logEntries').innerHTML=logs.slice(-20).reverse().map(l=>'<div class="log-entry"><span class="time">'+l.time+'</span><span class="msg"><b>'+l.robot+'</b> 追偿 ¥'+(l.debt||0)+' · '+(l.case||'')+'</span>'+(l.user?'<span style="color:var(--accent);font-size:7px;">'+l.user+'</span>':'')+'<span class="money">+'+(typeof l.money==='number'?formatMoney(l.money):l.money)+'</span></div>').join('');
+}
+
+function renderRegions(){
+  const users=getUsers();
+  const claimedMap={};
+  robots.forEach(r=>{if(r.controller)claimedMap[r.id]=r.controller});
+
+  const sm={working:{cls:'working',txt:'工作中',scls:'s-working'},done:{cls:'done',txt:'已完结',scls:'s-done'},standby:{cls:'standby',txt:'待命',scls:'s-standby'}};
+  const html=regions.map((region,ri)=>{
+    const rbots=robots.filter(r=>r.region===ri);
+    const w=rbots.filter(r=>r.status==='working'),d=rbots.filter(r=>r.status==='done'),sb=rbots.filter(r=>r.status==='standby');
+    const totalDebt=rbots.reduce((s,r)=>s+r.debtAmount,0);
+    const isExpanded=expandedRegions.has(ri);
+    const robotsHTML=rbots.map(r=>{
+      const s=sm[r.status];const eta=r.status==='working'?Math.max(0,20-Math.floor(r.progress/100*20))+'min':r.status==='done'?'完结':'—';
+      const ctrl=r.controller||claimedMap[r.id];
+      const isClaimed=!!ctrl;
+      return'<div class="robot-card '+s.cls+(isClaimed?' claimed':'')+'" data-id="'+r.id+'"><div class="r-header"><span class="r-name">'+r.name+'</span><span class="r-status '+s.scls+'">'+s.txt+'</span></div><div class="r-amount">欠款：<b>¥'+r.debtAmount+'</b> | '+r.caseType+'</div><div class="r-progress"><div class="r-progress-bar" style="width:'+r.progress+'%"></div></div><div class="r-meta"><span>'+eta+'</span><span>'+r.progress+'%</span><span class="earned">'+formatMoney(r.earned||0)+'</span></div>'+(isClaimed?'<div class="r-controller"><span class="ctrl-dot"></span>'+ctrl+'</div>':'')+'</div>';
+    }).join('');
+    return'<div class="region-group'+(isExpanded?' expanded':'')+'"><div class="region-header" onclick="toggleRegion('+ri+')"><div class="expand-icon">+</div><span class="region-name">'+region.name+'</span><span class="region-total-debt">累计 ¥'+totalDebt.toLocaleString()+'</span><div class="region-stats"><span><span class="rs-dot" style="background:#00ff88;box-shadow:0 0 4px #00ff88"></span>'+w.length+'工作</span><span><span class="rs-dot" style="background:#f59e0b"></span>'+d.length+'完结</span><span><span class="rs-dot" style="background:#64748b"></span>'+sb.length+'待命</span></div></div><div class="region-body"><div class="region-robots">'+robotsHTML+'</div></div></div>';
+  }).join('');
+  document.getElementById('regionPanel').innerHTML=html;
+}
+function toggleRegion(ri){if(expandedRegions.has(ri))expandedRegions.delete(ri);else expandedRegions.add(ri);renderRegions()}
+
+function drawPieChart(){
+  const pc=document.getElementById('pieCanvas'),ctx=pc.getContext('2d'),cx=50,cy=50,oR=42,iR=24;
+  const counts={};robots.forEach(r=>{counts[r.caseType]=(counts[r.caseType]||0)+1});
+  const entries=Object.entries(counts).sort((a,b)=>b[1]-a[1]),total=robots.length;
+  ctx.clearRect(0,0,100,100);let angle=-Math.PI/2;
+  entries.forEach(([type,count],i)=>{const sa=(count/total)*Math.PI*2;ctx.beginPath();ctx.arc(cx,cy,oR,angle,angle+sa);ctx.arc(cx,cy,iR,angle+sa,angle,true);ctx.closePath();ctx.fillStyle=caseColors[i%10];ctx.fill();const ma=angle+sa/2;ctx.fillStyle=caseColors[i%10];ctx.font='bold 6px "PingFang SC","Microsoft YaHei",monospace';ctx.textAlign=ma>Math.PI/2&&ma<Math.PI*1.5?'right':'left';ctx.fillText(type.slice(0,2)+Math.round(count/total*100)+'%',cx+Math.cos(ma)*(oR+8),cy+Math.sin(ma)*(oR+8)+1);angle+=sa});
+  ctx.fillStyle='#e2e8f0';ctx.font='bold 10px "Courier New",monospace';ctx.textAlign='center';ctx.fillText(total,cx,cy-1);
+  ctx.fillStyle='#8899b4';ctx.font='5.5px "PingFang SC","Microsoft YaHei",monospace';ctx.fillText('总案件',cx,cy+10);
+  document.getElementById('pieLegend').innerHTML=entries.map(([type,count],i)=>'<div class="item"><span><span class="swatch" style="background:'+caseColors[i%10]+'"></span>'+type.slice(0,6)+'</span><span class="pct">'+count+'<span style="color:#475569;font-weight:400">/'+total+'</span></span></div>').join('');
+}
+
+function drawRegionPie(){
+  const pc=document.getElementById('regionPieCanvas'),ctx=pc.getContext('2d'),cx=50,cy=50,oR=42,iR=24;
+  const counts={};robots.forEach(r=>{const k=regions[r.region].name;counts[k]=(counts[k]||0)+1});
+  const entries=Object.entries(counts).sort((a,b)=>b[1]-a[1]),total=robots.length;
+  ctx.clearRect(0,0,100,100);let angle=-Math.PI/2;
+  entries.forEach(([name,count],i)=>{const sa=(count/total)*Math.PI*2;ctx.beginPath();ctx.arc(cx,cy,oR,angle,angle+sa);ctx.arc(cx,cy,iR,angle+sa,angle,true);ctx.closePath();ctx.fillStyle=regionColors[i%10];ctx.fill();const ma=angle+sa/2;ctx.fillStyle=regionColors[i%10];ctx.font='bold 6px "PingFang SC","Microsoft YaHei",monospace';ctx.textAlign=ma>Math.PI/2&&ma<Math.PI*1.5?'right':'left';ctx.fillText(name.slice(0,2)+Math.round(count/total*100)+'%',cx+Math.cos(ma)*(oR+8),cy+Math.sin(ma)*(oR+8)+1);angle+=sa});
+  ctx.fillStyle='#e2e8f0';ctx.font='bold 10px "Courier New",monospace';ctx.textAlign='center';ctx.fillText('10区',cx,cy-1);
+  ctx.fillStyle='#8899b4';ctx.font='5.5px "PingFang SC","Microsoft YaHei",monospace';ctx.fillText('对接法院',cx,cy+10);
+  document.getElementById('regionPieLegend').innerHTML=entries.map(([name,count],i)=>'<div class="item"><span><span class="swatch" style="background:'+regionColors[i%10]+'"></span>'+name.slice(0,6)+'</span><span class="pct">'+count+'<span style="color:#475569;font-weight:400">/'+total+'</span></span></div>').join('');
+}
+
+// ==================== STATS ====================
+function updateStats(){
+  const w=robots.filter(r=>r.status==='working'),d=robots.filter(r=>r.status==='done'),sb=robots.filter(r=>r.status==='standby');
+  const totalDebtAll=robots.reduce((s,r)=>s+r.debtAmount,0);
+  const avgDebt=robots.length>0?Math.round(totalDebtAll/robots.length):0;
+  const users=getUsers();
+  const claimed=robots.filter(r=>r.controller).length;
+
+  document.getElementById('totalEarnings').textContent=formatMoney(totalEarnings);
+  document.getElementById('totalTasksSmall').textContent=totalTasksCompleted+' 个任务';
+  document.getElementById('totalTasks').textContent=totalTasksCompleted;
+  document.getElementById('cntWorking').textContent=w.length;
+  document.getElementById('cntDone').textContent=d.length;
+  document.getElementById('cntStandby').textContent=sb.length;
+  document.getElementById('cntClaimed').textContent=claimed;
+  document.getElementById('onlineUsers').textContent=users.length;
+  document.getElementById('claimedRobots').textContent=claimed;
+  document.getElementById('casesFiled').textContent=totalTasksCompleted;
+  document.getElementById('totalDebt').textContent='¥'+totalDebtAll.toLocaleString();
+  document.getElementById('avgDebt').textContent='¥'+avgDebt.toLocaleString();
+  document.getElementById('totalTokens').textContent=Math.round(totalTokensK);
+}
+
+// ==================== SYNC LISTENER ====================
+function syncFromStorage(){
+  try{
+    const stored=localStorage.getItem(STORAGE_KEY_ROBOTS);
+    if(stored){
+      const newRobots=JSON.parse(stored);
+      if(JSON.stringify(newRobots)!==JSON.stringify(robots)){
+        robots=newRobots;
+        totalTasksCompleted=robots.filter(r=>r.status==='done').length;
+        totalDebtAmount=robots.reduce((s,r)=>r.status==='done'?s+r.debtAmount:s,0);
+        totalEarnings=robots.reduce((s,r)=>s+(r.earned||0),0)+1250;
+        renderRegions();updateStats();drawPieChart();drawRegionPie();
+        document.getElementById('syncDot').style.background='var(--work)';
+        document.getElementById('syncText').textContent='已同步';
+        setTimeout(()=>{document.getElementById('syncDot').style.background='var(--accent)';document.getElementById('syncText').textContent='实时同步'},1500);
+      }
+    }
+    // Check for new completions
+    const comps=getCompletions();
+    if(comps.length>completionEntries.length){completionEntries=comps;renderFeed()}
+    const logs=getLogs();
+    if(logs.length>logEntries.length){logEntries=logs;renderLogs()}
+  }catch(e){}
+}
+
+// Listen for cross-tab storage events
+window.addEventListener('storage',function(e){
+  if(e.key===STORAGE_KEY_ROBOTS){syncFromStorage()}
+  if(e.key===STORAGE_KEY_COMPLETIONS){completionEntries=getCompletions();renderFeed()}
+  if(e.key===STORAGE_KEY_LOGS){logEntries=getLogs();renderLogs()}
+  if(e.key===STORAGE_KEY_USERS){updateStats();renderRegions()}
+});
+
+// ==================== ROBOT SIMULATION ====================
+let tickCount=0,lastTokenTick=Date.now(),tokenRateKPerMin=0;
+function tick(){
+  tickCount++;const now=Date.now();
+  // Simulate robot progress for unclaimed robots (master manages these)
+  let changed=false;
+  robots.forEach(r=>{
+    if(r.controller)return; // Don't simulate claimed robots - the individual dashboard handles them
+    if(r.status!=='working')return;
+    const dur=20*60*1000,elapsed=now-r.lastTaskTime;
+    r.progress=Math.min(100,Math.floor((elapsed/dur)*100));
+    if(elapsed>=dur){
+      r.earned=(r.earned||0)+5;totalEarnings+=5;totalTasksCompleted++;totalDebtAmount+=r.debtAmount;
+      r.progress=0;r.lastTaskTime=now;r.caseType=debtTypes[Math.floor(Math.random()*10)];r.debtAmount=randDebt();r.caseCount++;
+      addLog(r.name,r.caseType,r.debtAmount,5,'');
+      addCompletion(r.name,r.caseType,r.debtAmount,'');
+      changed=true;
+      const sr=Math.random();if(sr<0.05){r.status='done';r.progress=100}else if(sr<0.07){r.status='standby';r.progress=0}
+    }
+  });
+  // Reactivate standby
+  robots.forEach(r=>{if(!r.controller&&r.status==='standby'&&Math.random()<0.04){r.status='working';r.progress=0;r.lastTaskTime=now;r.caseType=debtTypes[Math.floor(Math.random()*10)];r.debtAmount=randDebt()}});
+
+  // Token simulation
+  const w=robots.filter(r=>r.status==='working');
+  const elapsedMin=(now-lastTokenTick)/60000;
+  if(elapsedMin>=0.1&&w.length>0){totalTokensK+=w.length*1.8*elapsedMin;lastTokenTick=now}
+
+  if(tickCount%5===0){renderRegions();updateStats();drawPieChart();drawRegionPie()}
+  if(changed)saveRobots();
+}
+
+// ==================== INIT ====================
+initRobots();
+renderFeed();renderRegions();updateStats();drawPieChart();drawRegionPie();renderLogs();
+setInterval(tick,1000);
+setInterval(syncFromStorage,2000);
+tick();syncFromStorage();
+</script>
+</body>
+</html>
