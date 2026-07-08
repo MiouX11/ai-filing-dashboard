@@ -200,7 +200,7 @@
     position:fixed;top:0;left:0;width:100%;height:100%;z-index:9000;
     background:rgba(6,11,20,0.96);backdrop-filter:blur(12px);
     display:flex;flex-direction:column;
-    opacity:0;visibility:hidden;pointer-events:none;
+    opacity:1;visibility:visible;pointer-events:auto;
     transition:opacity 0.35s,visibility 0.35s;
   }
   .robot-detail-overlay.open{opacity:1;visibility:visible;pointer-events:auto}
@@ -466,34 +466,10 @@
 <div class="scanlines"></div>
 <div class="scan-beam"></div>
 
-<!-- ====== LOGIN OVERLAY ====== -->
-<div class="login-overlay" id="loginOverlay">
-  <div class="login-box" id="loginBox">
-    <div class="login-logo">
-      <div class="ll-head"><div class="ll-eyes"><span></span><span></span></div></div>
-    </div>
-    <h2>AI 批量立案监控平台</h2>
-    <div class="login-sub">智能案卷处理 v5.0 · 身份验证</div>
-    <div class="field">
-      <label>用户名称</label>
-      <input type="text" id="loginName" placeholder="请输入用户名称" autocomplete="off">
-    </div>
-    <div class="field">
-      <label>访问密码</label>
-      <input type="password" id="loginPass" placeholder="请输入访问密码">
-    </div>
-    <button class="btn-login" onclick="doLogin()">登 录 系 统</button>
-    <div class="login-error" id="loginError"></div>
-  </div>
-</div>
-
-<!-- ====== TOAST CONTAINER ====== -->
-<div class="toast-container" id="toastContainer"></div>
-
 <!-- ====== ROBOT DETAIL OVERLAY ====== -->
 <div class="robot-detail-overlay" id="robotDetailOverlay">
   <div class="rd-tab-bar">
-    <div class="rd-back" onclick="closeRobotDetail()">← 返回总控</div>
+    
     <div class="rd-tab active" data-tab="0" onclick="switchTab(0)">🧠 工作台</div>
     <div class="rd-tab" data-tab="1" onclick="switchTab(1)">📊 数据中心</div>
     <div class="rd-tab" data-tab="2" onclick="switchTab(2)">📜 日志中心</div>
@@ -655,94 +631,6 @@
   </div>
 </div>
 
-<!-- ====== MAIN APP ====== -->
-<div class="app" id="mainApp">
-  <!-- Header -->
-  <div class="header">
-    <div class="header-left">
-      <div class="logo"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="2" y="2" width="20" height="20" rx="3" stroke="#060b14" stroke-width="2.5"/><line x1="7" y1="7" x2="17" y2="7" stroke="#060b14" stroke-width="2" stroke-linecap="round"/><line x1="7" y1="12" x2="17" y2="12" stroke="#060b14" stroke-width="2" stroke-linecap="round"/><line x1="7" y1="17" x2="13" y2="17" stroke="#060b14" stroke-width="2" stroke-linecap="round"/></svg></div>
-      <div class="title-group">
-        <h1>AI 批量立案监控平台</h1>
-        <span class="sub">智能案卷处理 v5.0 · 100个AI机器人实时在线 · 标的额 < ¥10,000 · 全自动运行中</span>
-      </div>
-    </div>
-    <div class="header-center">
-      <div class="stat"><div class="val" id="totalTasks">0</div><span style="font-size:9px;">完成任务</span></div>
-      <div class="stat"><div class="val" id="successRate">99.8%</div><span style="font-size:9px;">成功率</span></div>
-      <div class="stat"><div class="val" id="efficiency">0</div><span style="font-size:9px;">件/小时</span></div>
-    </div>
-    <div class="header-right">
-      <div class="earn-box"><div class="label">H 当前时薪</div><div class="amount" id="hourlyRate">¥0</div><div class="rate">/小时</div></div>
-      <div class="earn-box"><div class="label">E 累计收益</div><div class="amount" id="totalEarnings">¥0.00</div><div class="rate" id="totalTasksSmall">0 个任务</div></div>
-      <div class="token-box"><div class="label">T Token速率</div><div class="amount" id="tokenRate">0</div><div class="rate">K/分钟</div></div>
-      <div class="token-box"><div class="label">S 累计Token</div><div class="amount" id="totalTokens">0</div><div class="rate">K tokens</div></div>
-      <div class="status-dots">
-        <div><span class="dot working"></span>工作中 <b id="cntWorking">0</b></div>
-        <div><span class="dot done"></span>已完结 <b id="cntDone">0</b></div>
-        <div><span class="dot standby"></span>待命 <b id="cntStandby">0</b></div>
-      </div>
-      <div class="user-badge" onclick="doLogout()" title="退出登录"><span class="user-dot"></span><span id="currentUser">--</span></div>
-    </div>
-  </div>
-
-  <!-- Stats bar -->
-  <div class="stats-bar">
-    <div class="stat-card"><div class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke="#f97316" stroke-width="1.5"/><line x1="7" y1="8" x2="17" y2="8" stroke="#f97316" stroke-width="1.5"/><line x1="7" y1="12" x2="14" y2="12" stroke="#f97316" stroke-width="1.5"/><line x1="7" y1="16" x2="11" y2="16" stroke="#f97316" stroke-width="1.5"/></svg></div><div class="info"><div class="n" id="casesFiled">0</div><div class="l">已立案数</div></div></div>
-    <div class="stat-card"><div class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#fbbf24" stroke-width="1.5"/><text x="12" y="16" text-anchor="middle" font-size="11" fill="#fbbf24" font-weight="700">$</text></svg></div><div class="info"><div class="n" id="totalDebt">¥0</div><div class="l">累计追偿标的</div></div></div>
-    <div class="stat-card"><div class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#f59e0b" stroke-width="1.5"/><line x1="12" y1="6" x2="12" y2="12" stroke="#f59e0b" stroke-width="1.5"/><line x1="12" y1="12" x2="16" y2="12" stroke="#f59e0b" stroke-width="1.5"/></svg></div><div class="info"><div class="n" id="avgTime">19.8min</div><div class="l">平均立案耗时</div></div></div>
-    <div class="stat-card"><div class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="2" y="3" width="20" height="16" rx="2" stroke="#06b6d4" stroke-width="1.5"/><line x1="2" y1="8" x2="22" y2="8" stroke="#06b6d4" stroke-width="1"/></svg></div><div class="info"><div class="n" id="avgDebt">¥0</div><div class="l">平均欠款金额</div></div></div>
-    <div class="stat-card"><div class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 21h18M5 21V10l7-7 7 7v11" stroke="#8b5cf6" stroke-width="1.5" fill="none"/><rect x="9" y="14" width="3" height="7" fill="rgba(139,92,246,0.15)" stroke="#8b5cf6" stroke-width="1"/></svg></div><div class="info"><div class="n" id="courts">10</div><div class="l">对接区域法院</div></div></div>
-  </div>
-
-  <!-- Main content -->
-  <div class="main-content">
-    <div class="left-panel">
-      <div class="panel-card pie-panel-clickable" onclick="openCaseOverlay()">
-        <h4><svg width="12" height="12" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#f97316" stroke-width="1.5"/><line x1="12" y1="3" x2="12" y2="21" stroke="#f97316" stroke-width="1"/><line x1="3" y1="12" x2="21" y2="12" stroke="#f97316" stroke-width="1"/></svg> 欠款类型分布</h4>
-        <div class="pie-wrap"><canvas id="pieCanvas" width="100" height="100"></canvas></div>
-        <div class="pie-legend" id="pieLegend"></div>
-        <div class="pie-hint">点击查看详情</div>
-      </div>
-      <div class="panel-card pie-panel-clickable" onclick="openRegionOverlay()">
-        <h4><svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M3 21h18M5 21V10l7-7 7 7v11" stroke="#8b5cf6" stroke-width="1.5" fill="none"/></svg> 区域法院分布</h4>
-        <div class="pie-wrap"><canvas id="regionPieCanvas" width="100" height="100"></canvas></div>
-        <div class="pie-legend" id="regionPieLegend"></div>
-        <div class="pie-hint">点击查看详情</div>
-      </div>
-      <div class="completion-feed" id="completionFeed"
-           onmouseenter="this.querySelector('.feed-scroll').classList.add('paused')"
-           onmouseleave="this.querySelector('.feed-scroll').classList.remove('paused')">
-        <div class="feed-header"><h4><span class="flow-indicator"></span>完成状态 · 实时滚动</h4></div>
-        <div class="feed-body"><div class="feed-scroll" id="feedScroll"></div></div>
-      </div>
-    </div>
-
-    <div class="center-panel" id="centerPanel">
-      <div class="thinking-stage" id="thinkingStage">
-        <div class="empty-detail" style="flex:1;display:flex;align-items:center;justify-content:center;">
-          <div class="big-icon">🤖</div>
-          <div>点击右侧机器人卡片<br>查看实时AI思考过程<br><br><span style="font-size:9px;color:rgba(249,115,22,0.5);">双击机器人卡片打开完整三窗口视图</span></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="right-panel">
-      <div id="regionPanel"></div>
-      <div class="task-queue" id="taskQueue">
-        <h4><svg width="12" height="12" viewBox="0 0 24 24" fill="none"><polygon points="12,2 15,9 23,9 17,14 19,22 12,17 5,22 7,14 1,9 9,9" fill="rgba(0,255,136,0.15)" stroke="#00ff88" stroke-width="1"/></svg> 即将完成</h4>
-        <div id="queueEntries"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Bottom log -->
-  <div class="bottom-area">
-    <div class="log-panel" id="logPanel">
-      <h4><span class="live-dot"></span>实时操作日志</h4>
-      <div id="logEntries"></div>
-    </div>
-  </div>
-</div>
 <script>
 // ==================== BACKGROUND ====================
 const bgCanvas=document.getElementById('bgCanvas'),bgCtx=bgCanvas.getContext('2d');
@@ -760,69 +648,6 @@ for(let i=0;i<particleCount;i++){dps.push({x:Math.random()*bgW,y:Math.random()*b
 let lastBgDraw=0;
 function drawBg(ts){if(isMobile&&ts-lastBgDraw<80){requestAnimationFrame(drawBg);return}lastBgDraw=ts;bgCtx.clearRect(0,0,bgW,bgH);gridOffset=(gridOffset+0.06)%(HEX_SIZE*Math.sqrt(3));if(!isMobile){for(const hp of hexPoints){const dy=(hp.y+gridOffset)%(bgH+HEX_SIZE*3)-HEX_SIZE*1.5;if(dy<-HEX_SIZE||dy>bgH+HEX_SIZE)continue;const a=0.03+0.025*Math.sin(hp.c*0.5+hp.r*0.7);if(a>0.015)drawHex(bgCtx,hp.x,dy,HEX_SIZE*0.85,a)}}for(const p of dps){p.y+=p.speed;if(p.y>bgH+20){p.y=-20;p.x=Math.random()*bgW;p.trail=[]}p.trail.push({x:p.x,y:p.y,life:1});if(p.trail.length>p.maxTrail)p.trail.shift();for(const t of p.trail){t.life-=0.06;if(t.life>0){bgCtx.beginPath();bgCtx.arc(t.x,t.y,p.size*0.7,0,Math.PI*2);bgCtx.fillStyle='rgba('+p.color+','+(t.life*p.opacity*0.6)+')';bgCtx.fill()}}bgCtx.beginPath();bgCtx.arc(p.x,p.y,p.size,0,Math.PI*2);bgCtx.fillStyle='rgba('+p.color+','+p.opacity+')';bgCtx.fill();bgCtx.beginPath();bgCtx.arc(p.x,p.y,p.size*2.5,0,Math.PI*2);bgCtx.fillStyle='rgba('+p.color+','+(p.opacity*0.12)+')';bgCtx.fill()}for(let i=0;i<dps.length;i++){for(let j=i+1;j<dps.length;j++){const dx=dps[i].x-dps[j].x,dy=dps[i].y-dps[j].y,dist=Math.sqrt(dx*dx+dy*dy);if(dist<80){bgCtx.beginPath();bgCtx.moveTo(dps[i].x,dps[i].y);bgCtx.lineTo(dps[j].x,dps[j].y);bgCtx.strokeStyle='rgba(249,115,22,'+(0.03*(1-dist/80))+')';bgCtx.lineWidth=0.5;bgCtx.stroke()}}}requestAnimationFrame(drawBg)}requestAnimationFrame(drawBg);
 
-// ==================== LOGIN ====================
-const VALID_PASSWORD='JUDai888';
-let currentUser='';
-
-// ==================== LOCALSTORAGE SYNC ====================
-const LS_ROBOTS='dash_robots',LS_USERS='dash_users',LS_LOGS='dash_logs',LS_COMPS='dash_completions';
-function syncRobotsToStorage(){try{localStorage.setItem(LS_ROBOTS,JSON.stringify(robots))}catch(e){}}
-function syncUsersToStorage(users){try{localStorage.setItem(LS_USERS,JSON.stringify(users))}catch(e){}}
-function getStoredUsers(){try{const s=localStorage.getItem(LS_USERS);return s?JSON.parse(s):[]}catch(e){return[]}}
-function registerSyncUser(name){const users=getStoredUsers().filter(u=>u.name!==name);users.push({name,loginTime:Date.now(),type:'robot'});syncUsersToStorage(users)}
-function unregisterSyncUser(name){const users=getStoredUsers().filter(u=>u.name!==name);syncUsersToStorage(users)}
-function claimRobotInStorage(robotId,userName){const r=robots.find(r=>r.id===robotId);if(r){r.controller=userName;r.controllerLoginTime=Date.now();syncRobotsToStorage()}}
-function releaseRobotInStorage(robotId){const r=robots.find(r=>r.id===robotId);if(r){r.controller=null;r.controllerLoginTime=null;syncRobotsToStorage()}}
-function addSyncLog(robotName,caseType,debtAmt,earned,userName){try{const key=LS_LOGS;let logs=[];const s=localStorage.getItem(key);if(s)logs=JSON.parse(s);logs.push({time:new Date().toTimeString().slice(0,8),robot:robotName,case:caseType,debt:debtAmt,money:earned,user:userName||''});if(logs.length>300)logs=logs.slice(-300);localStorage.setItem(key,JSON.stringify(logs))}catch(e){}}
-function addSyncCompletion(robotName,caseType,debtAmt,userName){try{const key=LS_COMPS;let comps=[];const s=localStorage.getItem(key);if(s)comps=JSON.parse(s);comps.push({time:new Date().toTimeString().slice(0,8),robot:robotName,case:caseType,amount:'¥'+debtAmt,money:'+¥5.00',user:userName||''});if(comps.length>400)comps=comps.slice(-400);localStorage.setItem(key,JSON.stringify(comps))}catch(e){}}
-// Listen for storage changes from other tabs (e.g. master releasing a robot)
-window.addEventListener('storage',function(e){if(e.key===LS_ROBOTS){try{const stored=JSON.parse(e.newValue);if(stored){robots.forEach(r=>{const sr=stored.find(s=>s.id===r.id);if(sr&&sr.controller!==r.controller&&!sr.controller&&r.controller===currentUser){r.controller=null}});syncRobotsToStorage()}}catch(ex){}}});
-
-function doLogin(){
-  const nameEl=document.getElementById('loginName');
-  const passEl=document.getElementById('loginPass');
-  const errorEl=document.getElementById('loginError');
-  const boxEl=document.getElementById('loginBox');
-  const name=nameEl.value.trim();
-  const pass=passEl.value;
-
-  if(!name){errorEl.textContent='请输入用户名称';boxEl.classList.add('login-shake');setTimeout(()=>boxEl.classList.remove('login-shake'),500);return}
-  if(pass!==VALID_PASSWORD){errorEl.textContent='密码错误，请重试';boxEl.classList.add('login-shake');setTimeout(()=>boxEl.classList.remove('login-shake'),500);passEl.value='';return}
-
-  errorEl.textContent='';
-  currentUser=name;
-  document.getElementById('currentUser').textContent=name;
-  document.getElementById('loginOverlay').classList.add('hidden');
-  // Store login state
-  try{sessionStorage.setItem('dashboard_user',name)}catch(e){}
-  // Register in shared user list
-  registerSyncUser(name);
-  // Load synced robot data if available
-  try{const stored=localStorage.getItem(LS_ROBOTS);if(stored){const synced=JSON.parse(stored);robots.forEach(r=>{const sr=synced.find(s=>s.id===r.id);if(sr){r.status=sr.status;r.progress=sr.progress;r.earned=sr.earned;r.controller=sr.controller;r.caseType=sr.caseType||r.caseType;r.debtAmount=sr.debtAmount||r.debtAmount}});totalTasksCompleted=robots.filter(r=>r.status==='done').length;totalEarnings=robots.reduce((s,r)=>s+(r.earned||0),0)+1250;totalDebtAmount=robots.reduce((s,r)=>r.status==='done'?s+r.debtAmount:s,0)}}catch(e){}
-  syncRobotsToStorage();
-}
-
-function doLogout(){
-  if(confirm('确定要退出登录吗？')){
-    // Release claimed robot
-    if(detailRobotId!==null)releaseRobotInStorage(detailRobotId);
-    unregisterSyncUser(currentUser);
-    currentUser='';
-    document.getElementById('loginName').value='';
-    document.getElementById('loginPass').value='';
-    document.getElementById('loginError').textContent='';
-    document.getElementById('loginOverlay').classList.remove('hidden');
-    try{sessionStorage.removeItem('dashboard_user')}catch(e){}
-    closeRobotDetail();
-  }
-}
-
-// Enter key to login
-document.getElementById('loginPass').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin()});
-document.getElementById('loginName').addEventListener('keydown',function(e){if(e.key==='Enter')document.getElementById('loginPass').focus()});
-
-// Check existing session
-try{const saved=sessionStorage.getItem('dashboard_user');if(saved){currentUser=saved;document.getElementById('currentUser').textContent=saved;document.getElementById('loginOverlay').classList.add('hidden')}}catch(e){}
 
 // ==================== AUDIO ====================
 let audioCtx=null,audioReady=false;
@@ -872,7 +697,7 @@ const parties=['张三','李四','王五','赵六','陈七','周八','吴九','�
 // ==================== ROBOT DATA ====================
 let robots=[],totalEarnings=0,totalTasksCompleted=0,totalDebtAmount=0,totalTokensK=0,tokenRateKPerMin=0;
 let startTime=Date.now(),lastTokenTick=Date.now();
-let logEntries=[],completionEntries=[];
+let logEntries=[],completionEntries=[]; // unused, kept for compatibility
 let selectedRobotId=null;
 let expandedRegions=new Set([0]);
 let lastNewCaseToast=Date.now(),lastTaskToast=Date.now();
@@ -883,38 +708,6 @@ let robotIdx=0;
 regions.forEach((region,ri)=>{for(let j=0;j<region.robots;j++){const name=makeRobotName(ri,j);const debtAmt=randDebt();const rand=Math.random();let status;if(rand<0.78)status='working';else if(rand<0.94)status='done';else status='standby';const progress=status==='done'?100:(status==='standby'?0:Math.floor(Math.random()*90)+5);const earned=status==='done'?5:(status==='working'?Math.floor(progress/100*5*100)/100:0);if(status==='done'){totalTasksCompleted++;totalDebtAmount+=debtAmt}totalEarnings+=earned;robots.push({id:robotIdx,name,region:ri,status,progress,lastTaskTime:Date.now()-Math.random()*20*60*1000,earned,debtAmount:debtAmt,caseType:assignedDebtTypes[robotIdx],caseCount:Math.floor(Math.random()*8)+1,thinkingStep:Math.floor(Math.random()*6),liveThought:'',singleEarned:earned*247,singleCases:Math.floor(Math.random()*200)+47});robotIdx++}});
 totalEarnings=robots.reduce((s,r)=>s+r.earned,0)+1250;
 
-// ==================== COMPLETION FEED ====================
-for(let i=0;i<80;i++){const h=Math.floor(Math.random()*24),m=Math.floor(Math.random()*60),s=Math.floor(Math.random()*60);const rn=makeRobotName(Math.floor(Math.random()*10),Math.floor(Math.random()*10));completionEntries.push({time:String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0'),robot:rn,case:debtTypes[Math.floor(Math.random()*10)],amount:'¥'+(Math.floor(Math.random()*9000+500)),money:'+¥5.00',id:'hist-'+i})}
-['天秤-A01','法眼-B03','智审-C07'].forEach((n,i)=>{completionEntries.push({time:new Date().toTimeString().slice(0,8),robot:n,case:debtTypes[i],amount:'¥'+randDebt(),money:'+¥5.00',id:'real-'+i})});
-function addCompletion(robotName,caseType,debtAmt){completionEntries.push({time:new Date().toTimeString().slice(0,8),robot:robotName,case:caseType,amount:'¥'+debtAmt,money:'+¥5.00',id:'c-'+Date.now()});if(completionEntries.length>200)completionEntries=completionEntries.slice(-200);renderFeed()}
-function renderFeed(){const html=completionEntries.map(e=>'<div class="feed-item"><span class="fi-time">'+e.time+'</span><span class="fi-robot">'+e.robot+'</span><span class="fi-case">'+e.case+'</span><span class="fi-amount">'+e.amount+'</span><span class="fi-badge">完成</span><span class="fi-money">'+e.money+'</span></div>').join('');document.getElementById('feedScroll').innerHTML=html+html}
-
-// ==================== LOG ====================
-function addLog(robotName,caseType,debtAmt,earned){logEntries.unshift({time:new Date().toTimeString().slice(0,8),msg:'<b>'+robotName+'</b> 追偿 ¥'+debtAmt+' · '+caseType,money:'+'+formatMoney(earned)});if(logEntries.length>100)logEntries.length=100;renderLogs()}
-function renderLogs(){document.getElementById('logEntries').innerHTML=logEntries.slice(0,20).map(l=>'<div class="log-entry"><span class="time">'+l.time+'</span><span class="msg">'+l.msg+'</span><span class="money">'+l.money+'</span></div>').join('')}
-
-// ==================== QUEUE ====================
-function renderQueue(){document.getElementById('queueEntries').innerHTML=robots.filter(r=>r.status==='working').sort((a,b)=>b.progress-a.progress).slice(0,12).map(r=>'<div class="tq-item"><span class="tq-name">'+r.name+'</span><span class="tq-case">¥'+r.debtAmount+' '+r.caseType+'</span><span class="tq-prog">'+r.progress+'%</span></div>').join('')}
-
-// ==================== PIE CHARTS ====================
-function drawPieChart(){const pc=document.getElementById('pieCanvas'),pctx=pc.getContext('2d');const cx=50,cy=50,outerR=42,innerR=24;const counts={};robots.forEach(r=>{counts[r.caseType]=(counts[r.caseType]||0)+1});const total=robots.length;const entries=Object.entries(counts).sort((a,b)=>b[1]-a[1]);pctx.clearRect(0,0,100,100);let angle=-Math.PI/2;entries.forEach(([type,count],i)=>{const sa=(count/total)*Math.PI*2;pctx.beginPath();pctx.arc(cx,cy,outerR,angle,angle+sa);pctx.arc(cx,cy,innerR,angle+sa,angle,true);pctx.closePath();pctx.fillStyle=caseColors[i%caseColors.length];pctx.fill();const ma=angle+sa/2;pctx.fillStyle=caseColors[i%caseColors.length];pctx.font='bold 6px "PingFang SC","Microsoft YaHei",monospace';pctx.textAlign=ma>Math.PI/2&&ma<Math.PI*1.5?'right':'left';pctx.fillText(type.slice(0,2)+Math.round(count/total*100)+'%',cx+Math.cos(ma)*(outerR+8),cy+Math.sin(ma)*(outerR+8)+1);angle+=sa});pctx.fillStyle='#e2e8f0';pctx.font='bold 10px "Courier New",monospace';pctx.textAlign='center';pctx.fillText(total,cx,cy-1);pctx.fillStyle='#8899b4';pctx.font='5.5px "PingFang SC","Microsoft YaHei",monospace';pctx.fillText('总案件',cx,cy+10);document.getElementById('pieLegend').innerHTML=entries.map(([type,count],i)=>'<div class="item"><span><span class="swatch" style="background:'+caseColors[i%caseColors.length]+'"></span>'+type.slice(0,6)+'</span><span class="pct">'+count+'<span style="color:#475569;font-weight:400">/'+total+'</span></span></div>').join('')}
-function drawRegionPie(){const pc=document.getElementById('regionPieCanvas'),pctx=pc.getContext('2d');const cx=50,cy=50,outerR=42,innerR=24;const counts={};robots.forEach(r=>{const k=regions[r.region].name;counts[k]=(counts[k]||0)+1});const total=robots.length;const entries=Object.entries(counts).sort((a,b)=>b[1]-a[1]);pctx.clearRect(0,0,100,100);let angle=-Math.PI/2;entries.forEach(([name,count],i)=>{const sa=(count/total)*Math.PI*2;pctx.beginPath();pctx.arc(cx,cy,outerR,angle,angle+sa);pctx.arc(cx,cy,innerR,angle+sa,angle,true);pctx.closePath();pctx.fillStyle=regionColors[i%regionColors.length];pctx.fill();const ma=angle+sa/2;pctx.fillStyle=regionColors[i%regionColors.length];pctx.font='bold 6px "PingFang SC","Microsoft YaHei",monospace';pctx.textAlign=ma>Math.PI/2&&ma<Math.PI*1.5?'right':'left';pctx.fillText(name.slice(0,2)+Math.round(count/total*100)+'%',cx+Math.cos(ma)*(outerR+8),cy+Math.sin(ma)*(outerR+8)+1);angle+=sa});pctx.fillStyle='#e2e8f0';pctx.font='bold 10px "Courier New",monospace';pctx.textAlign='center';pctx.fillText('10区',cx,cy-1);pctx.fillStyle='#8899b4';pctx.font='5.5px "PingFang SC","Microsoft YaHei",monospace';pctx.fillText('对接法院',cx,cy+10);document.getElementById('regionPieLegend').innerHTML=entries.map(([name,count],i)=>'<div class="item"><span><span class="swatch" style="background:'+regionColors[i%regionColors.length]+'"></span>'+name.slice(0,6)+'</span><span class="pct">'+count+'<span style="color:#475569;font-weight:400">/'+total+'</span></span></div>').join('')}
-
-// ==================== CASE OVERLAY ====================
-function openCaseOverlay(){const counts={};robots.forEach(r=>{counts[r.caseType]=(counts[r.caseType]||0)+1});const entries=Object.entries(counts).sort((a,b)=>b[1]-a[1]);const sm={working:'工作中',done:'已完结',standby:'待命'},scls={working:'s-working',done:'s-done',standby:'s-standby'};let html='';entries.forEach(([type,count],i)=>{const color=caseColors[i%caseColors.length];const caseRobots=robots.filter(r=>r.caseType===type).sort((a,b)=>{const order={working:0,done:1,standby:2};return order[a.status]-order[b.status]});html+='<div style="margin-bottom:8px;padding:10px;background:rgba(255,255,255,0.01);border:1px solid rgba(255,255,255,0.04);"><div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:8px;height:8px;background:'+color+'"></span><b>'+type+'</b> <span style="color:var(--text-dim);font-size:9px;">'+count+' 机器人</span></div><div style="display:flex;flex-wrap:wrap;gap:4px;">'+caseRobots.map(r=>'<span style="cursor:pointer;font-size:9px;padding:3px 8px;background:rgba(13,21,37,0.6);border:1px solid var(--border);font-family:Courier New,monospace;color:var(--debt);" onclick="openRobotDetail('+r.id+')">'+r.name+'</span>').join('')+'</div></div>'});const overlay=document.createElement('div');overlay.id='caseOverlay';overlay.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;z-index:9000;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;';overlay.innerHTML='<div style="background:rgba(13,21,37,0.98);border:1px solid var(--border);width:650px;max-width:95vw;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.7);"><div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:rgba(249,115,22,0.03);"><h3 style="font-size:15px;color:var(--text);">📊 欠款类型分布 · 机器人详情</h3><button onclick="this.closest(\'#caseOverlay\').remove()" style="width:30px;height:30px;cursor:pointer;background:rgba(255,255,255,0.02);border:1px solid var(--border);color:var(--text-dim);font-size:18px;">&times;</button></div><div style="flex:1;overflow-y:auto;padding:14px 20px;">'+html+'</div></div>';overlay.addEventListener('click',function(e){if(e.target===overlay)overlay.remove()});document.body.appendChild(overlay)}
-function openRegionOverlay(){const sm={working:'工作中',done:'已完结',standby:'待命'};let html='';regions.forEach((region,ri)=>{const regionRobots=robots.filter(r=>r.region===ri).sort((a,b)=>{const order={working:0,done:1,standby:2};return order[a.status]-order[b.status]});const working=regionRobots.filter(r=>r.status==='working');const totalDebt=regionRobots.reduce((s,r)=>s+r.debtAmount,0);html+='<div style="margin-bottom:8px;padding:10px;background:rgba(255,255,255,0.01);border:1px solid rgba(255,255,255,0.04);"><div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="display:inline-block;width:8px;height:8px;background:'+regionColors[ri]+'"></span><b>'+region.name+'</b> <span style="color:var(--debt);font-size:9px;font-family:Courier New,monospace;">¥'+totalDebt.toLocaleString()+'</span> <span style="color:var(--text-dim);font-size:9px;">'+regionRobots.length+'机器人 · '+working.length+'工作</span></div><div style="display:flex;flex-wrap:wrap;gap:4px;">'+regionRobots.map(r=>'<span style="cursor:pointer;font-size:9px;padding:3px 8px;background:rgba(13,21,37,0.6);border:1px solid var(--border);font-family:Courier New,monospace;color:var(--debt);" onclick="openRobotDetail('+r.id+')">'+r.name+'</span>').join('')+'</div></div>'});const overlay=document.createElement('div');overlay.id='regionOverlay';overlay.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;z-index:9000;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;';overlay.innerHTML='<div style="background:rgba(13,21,37,0.98);border:1px solid var(--border);width:650px;max-width:95vw;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.7);"><div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:rgba(139,92,246,0.03);"><h3 style="font-size:15px;color:var(--text);">🏛️ 区域法院分布 · 机器人详情</h3><button onclick="this.closest(\'#regionOverlay\').remove()" style="width:30px;height:30px;cursor:pointer;background:rgba(255,255,255,0.02);border:1px solid var(--border);color:var(--text-dim);font-size:18px;">&times;</button></div><div style="flex:1;overflow-y:auto;padding:14px 20px;">'+html+'</div></div>';overlay.addEventListener('click',function(e){if(e.target===overlay)overlay.remove()});document.body.appendChild(overlay)}
-
-// ==================== REGIONS ====================
-function renderRegions(){const sm={working:{cls:'working',txt:'工作中',sCls:'s-working',dot:'#00ff88'},done:{cls:'done',txt:'已完结',sCls:'s-done',dot:'#f59e0b'},standby:{cls:'standby',txt:'待命',sCls:'s-standby',dot:'#64748b'}};const html=regions.map((region,ri)=>{const regionRobots=robots.filter(r=>r.region===ri);const working=regionRobots.filter(r=>r.status==='working');const done=regionRobots.filter(r=>r.status==='done');const standby=regionRobots.filter(r=>r.status==='standby');const totalDebt=regionRobots.reduce((s,r)=>s+r.debtAmount,0);const isExpanded=expandedRegions.has(ri);const robotsHTML=regionRobots.map(r=>{const s=sm[r.status];const eta=r.status==='working'?Math.max(0,20-Math.floor(r.progress/100*20))+'min':r.status==='done'?'完结':'—';return'<div class="robot-card '+s.cls+(r.id===selectedRobotId?' selected':'')+'" data-id="'+r.id+'" onclick="onRobotCardClick('+r.id+')" ondblclick="openRobotDetail('+r.id+')"><div class="r-header"><span class="r-name">'+r.name+'</span><span class="r-status '+s.sCls+'">'+s.txt+'</span></div><div class="r-amount">欠款：<b>¥'+r.debtAmount+'</b> | '+r.caseType+'</div><div class="r-progress"><div class="r-progress-bar" style="width:'+r.progress+'%"></div></div><div class="r-meta"><span>'+eta+'</span><span>'+r.progress+'%</span><span class="earned">'+formatMoney(r.earned)+'</span></div></div>'}).join('');return'<div class="region-group'+(isExpanded?' expanded':'')+'" id="region-'+ri+'"><div class="region-header" onclick="toggleRegion('+ri+')"><div class="expand-icon">+</div><span class="region-name">'+region.name+'</span><span class="region-total-debt">累计欠款 ¥'+totalDebt.toLocaleString()+'</span><div class="region-stats"><span><span class="rs-dot" style="background:#00ff88;box-shadow:0 0 4px #00ff88"></span>'+working.length+'工作</span><span><span class="rs-dot" style="background:#f59e0b"></span>'+done.length+'完结</span><span><span class="rs-dot" style="background:#64748b"></span>'+standby.length+'待命</span></div></div><div class="region-body"><div class="region-robots">'+robotsHTML+'</div></div></div>'}).join('');document.getElementById('regionPanel').innerHTML=html}
-function toggleRegion(ri){if(expandedRegions.has(ri))expandedRegions.delete(ri);else expandedRegions.add(ri);renderRegions();if(selectedRobotId!==null){const el=document.querySelector('.robot-card[data-id="'+selectedRobotId+'"]');if(el)el.classList.add('selected')}}
-
-// ==================== MAIN DASHBOARD ROBOT SELECT ====================
-function onRobotCardClick(id){selectedRobotId=id;renderRegions();renderCenterDetail(id);const r=robots.find(r=>r.id===id);if(r&&!expandedRegions.has(r.region)){expandedRegions.add(r.region);renderRegions();const el=document.querySelector('.robot-card[data-id="'+id+'"]');if(el)el.classList.add('selected')}}
-
-function renderCenterDetail(id){const r=robots.find(r=>r.id===id);if(!r)return;const steps=thinkingStepsMap[r.caseType]||thinkingStepsMap[debtTypes[0]];const sm={working:'工作中',done:'已完结',standby:'待命'},sc={working:'#00ff88',done:'#fbbf24',standby:'#9ca3af'},scls={working:'working',done:'done',standby:'standby'};const remaining=r.status==='working'?Math.max(0,Math.ceil((100-r.progress)/100*20)):0;const regionName=regions[r.region]?regions[r.region].name:'';const liveThought=liveThoughts[Math.floor(Math.random()*liveThoughts.length)];document.getElementById('thinkingStage').innerHTML='<div class="ts-header"><div class="ts-robot-icon"><div class="robot-head"><div class="robot-eyes"><span></span><span></span></div></div></div><div class="ts-info"><div class="ts-name">'+r.name+'</div><div class="ts-meta">'+regionName+' · '+r.caseType+' · 第 '+r.caseCount+' 件</div></div><span class="ts-status-badge '+scls[r.status]+'" style="color:'+sc[r.status]+'">'+sm[r.status]+'</span></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;padding:0 18px 14px;flex-shrink:0;"><div class="detail-item"><span class="dl">欠款金额</span><span class="dv highlight">¥'+r.debtAmount+'</span></div><div class="detail-item"><span class="dl">任务进度</span><span class="dv" style="color:'+(r.status==='working'?'#00ff88':sc[r.status])+'">'+r.progress+'%</span></div><div class="detail-item"><span class="dl">预计剩余</span><span class="dv">'+(r.status==='working'?remaining+' 分钟':'—')+'</span></div><div class="detail-item"><span class="dl">累计收益</span><span class="dv" style="color:#00ff88">'+formatMoney(r.earned)+'</span></div></div><div style="padding:0 18px 14px;flex-shrink:0;"><div class="progress-bar"><div class="progress-fill" style="width:'+r.progress+'%"></div></div><div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text-dim);"><span>整体进度</span><span>'+r.progress+'%</span></div></div><div class="ts-body"><div style="background:rgba(249,115,22,0.03);border:1px solid rgba(249,115,22,0.18);padding:12px 14px;margin-bottom:12px;position:relative;overflow:hidden;"><div style="font-size:9px;color:var(--debt);margin-bottom:6px;display:flex;align-items:center;gap:5px;font-weight:600;"><span class="pulse-dot"></span>AI 实时思考流</div><div style="font-size:11px;color:#fdba74;line-height:1.7;font-family:Courier New,monospace;">'+liveThought+'<span class="cursor-blink">|</span></div></div><div style="font-size:9px;color:var(--text-dim);margin-bottom:8px;"><span class="pulse-dot" style="background:var(--work)"></span> 结构化推理步骤</div><div class="think-timeline">'+steps.map((step,i)=>{let cls='pending',icon='○',timeStr='';if(i<r.thinkingStep){cls='done';icon='✓';const d=new Date();timeStr=d.getHours()+':'+String(Math.max(0,d.getMinutes()-(r.thinkingStep-i)*3)).padStart(2,'0')+':'+String(Math.floor(Math.random()*60)).padStart(2,'0')}else if(i===r.thinkingStep&&r.status==='working'){cls='active';icon='▸'}return'<div class="think-node '+cls+'"><div class="tn-icon">'+icon+'</div><div class="tn-text">'+step.text+'</div>'+(cls==='active'?'<div class="tn-detail">'+step.detail+'</div>':'')+(timeStr?'<div class="tn-time">'+timeStr+'</div>':'')+'</div>'}).join('')+'</div></div>'}
-
-// ==================== ROBOT DETAIL OVERLAY ====================
-let detailRobotId=null;
 let detailProgress=0;
 let detailThinkingStep=0;
 let detailCases=0;
@@ -930,7 +723,7 @@ function openRobotDetail(id){
   if(!r)return;
 
   // Claim this robot in shared storage
-  if(currentUser)claimRobotInStorage(id,currentUser);
+  claimRobotInStorage(id,"guest");
 
   // Init data
   detailProgress=r.progress;
@@ -1136,72 +929,8 @@ function overlayTick(){
   document.getElementById('dcTokens').textContent=Math.round(detailTokens).toLocaleString()+' K';
 }
 
-// ==================== STATS ====================
-function updateStats(){
-  const w=robots.filter(r=>r.status==='working'),d=robots.filter(r=>r.status==='done'),sb=robots.filter(r=>r.status==='standby');
-  const totalDebtAll=robots.reduce((s,r)=>s+r.debtAmount,0);
-  const avgDebt=robots.length>0?Math.round(totalDebtAll/robots.length):0;
-  const now=Date.now();
-  const elapsedMin=(now-lastTokenTick)/60000;
-  if(elapsedMin>=0.1&&w.length>0){const newTokens=w.length*1.8*elapsedMin;totalTokensK+=newTokens;tokenRateKPerMin=Math.round(w.length*1.8*10)/10;lastTokenTick=now}else if(w.length===0){tokenRateKPerMin=0}
-  if(totalTokensK<100)totalTokensK=120+Math.random()*30;
-  document.getElementById('hourlyRate').textContent='¥'+w.length*3*5;
-  document.getElementById('totalEarnings').textContent=formatMoney(totalEarnings);
-  document.getElementById('totalTasksSmall').textContent=totalTasksCompleted+' 个任务';
-  document.getElementById('totalTasks').textContent=totalTasksCompleted;
-  document.getElementById('cntWorking').textContent=w.length;
-  document.getElementById('cntDone').textContent=d.length;
-  document.getElementById('cntStandby').textContent=sb.length;
-  document.getElementById('casesFiled').textContent=totalTasksCompleted;
-  document.getElementById('totalDebt').textContent='¥'+totalDebtAll.toLocaleString();
-  document.getElementById('avgDebt').textContent='¥'+avgDebt.toLocaleString();
-  document.getElementById('tokenRate').textContent=tokenRateKPerMin.toFixed(1);
-  document.getElementById('totalTokens').textContent=Math.round(totalTokensK);
-  const elapsedSec=(Date.now()-startTime)/1000;
-  const perHour=elapsedSec>0?Math.round(totalTasksCompleted/elapsedSec*3600):0;
-  const effEl=document.getElementById('efficiency');if(effEl)effEl.textContent=perHour;
-}
-
-// ==================== MAIN LOOP ====================
-let tickCount=0;
-function tick(){
-  const now=Date.now();tickCount++;
-  robots.forEach(r=>{
-    if(r.status!=='working')return;
-    const dur=20*60*1000,elapsed=now-r.lastTaskTime;
-    r.progress=Math.min(100,Math.floor((elapsed/dur)*100));
-    const ns=Math.min(6,Math.floor((elapsed/dur)*7));
-    if(ns!==r.thinkingStep){r.thinkingStep=ns;if(r.id===selectedRobotId)renderCenterDetail(r.id)}
-    if(elapsed>=dur){
-      r.earned+=5;totalEarnings+=5;totalTasksCompleted++;totalDebtAmount+=r.debtAmount;
-      r.progress=0;r.thinkingStep=0;r.lastTaskTime=now;
-      r.caseType=debtTypes[Math.floor(Math.random()*debtTypes.length)];r.debtAmount=randDebt();r.caseCount++;
-      r.singleCases=(r.singleCases||0)+1;r.singleEarned=(r.singleEarned||0)+5;
-      addLog(r.name,r.caseType,r.debtAmount,5);addCompletion(r.name,r.caseType,r.debtAmount);
-      // Sync to master dashboard
-      addSyncLog(r.name,r.caseType,r.debtAmount,5,currentUser||'');
-      addSyncCompletion(r.name,r.caseType,r.debtAmount,currentUser||'');
-      playDing();
-      if(now-lastTaskToast>15000){showToast('task-done','任务完成通知',r.name+' 已完成「'+r.caseType+'」追偿 ¥'+r.debtAmount+'，收益 +¥5.00，已接取新案件。',8000);lastTaskToast=now}
-      const card=document.querySelector('.robot-card[data-id="'+r.id+'"]');if(card){card.classList.add('flash');setTimeout(()=>card.classList.remove('flash'),500)}
-      const sr=Math.random();if(sr<0.05){r.status='done';r.progress=100;r.thinkingStep=7}else if(sr<0.07){r.status='standby';r.progress=0;r.thinkingStep=0}
-      if(r.id===selectedRobotId)renderCenterDetail(r.id);
-    }
-  });
-  robots.forEach(r=>{if(r.status==='standby'&&Math.random()<0.05){r.status='working';r.progress=0;r.thinkingStep=0;r.lastTaskTime=now;r.caseType=debtTypes[Math.floor(Math.random()*debtTypes.length)];r.debtAmount=randDebt()}});
-  const minutesSinceLastCase=(now-lastNewCaseToast)/60000;
-  if(minutesSinceLastCase>=(2+Math.random()*1)){const wCount=robots.filter(r=>r.status==='working').length;const pendingRobots=robots.filter(r=>r.status==='standby');if(pendingRobots.length>0){const sample=pendingRobots[Math.floor(Math.random()*pendingRobots.length)];playNewCase();showToast('case-new','新案件待受理','系统检测到 '+sample.name+' 可接取新案件。当前 '+wCount+' 个机器人在线工作，待处理案件池剩余 '+pendingRobots.length+' 件。',8000)}else{const wSample=robots.filter(r=>r.status==='working');if(wSample.length>0){const s=wSample[Math.floor(Math.random()*wSample.length)];showToast('case-new','案件队列更新','全部100个AI机器人均在工作或已完结。'+s.name+' 即将完成当前任务。',6000)}}lastNewCaseToast=now}
-  renderRegions();updateStats();drawPieChart();drawRegionPie();renderQueue();
-  // Sync robot states to master every 2 seconds
-  if(tickCount%2===0)syncRobotsToStorage();
-}
-
-// ==================== INIT ====================
-renderFeed();renderRegions();updateStats();drawPieChart();renderLogs();renderQueue();selectRobot(0);
-
-setTimeout(()=>{const w=robots.filter(r=>r.status==='working').length;if(currentUser){showToast('case-new','系统就绪 · 欢迎回来','AI立案平台 v5.0 已启动。欢迎 '+currentUser+'！'+w+' 个AI机器人在线工作，10个区域法院已对接。双击机器人卡片查看完整三窗口视图。',10000)}},1500);
-
-setInterval(tick,1000);tick();
+// Auto-init: load first robot into detail overlay
+openRobotDetail(0);
 setInterval(overlayTick,600);
 </script>
 </body>
