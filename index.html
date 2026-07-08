@@ -459,6 +459,22 @@
     .rd-tab{padding:8px 10px;font-size:9px}.rd-tab-robot{font-size:10px;gap:4px}
     .dc-stats-row{grid-template-columns:1fr 1fr}
   }
+  /* Interactive chart effects */
+  .dc-pie-wrap canvas{cursor:pointer;transition:filter 0.2s}
+  .dc-pie-wrap:hover canvas{filter:brightness(1.05)}
+  .pie-legend .item{cursor:pointer;transition:all 0.2s;padding:1px 4px;border-radius:2px}
+  .pie-legend .item:hover{background:rgba(255,255,255,0.04);color:#fff}
+  .pie-legend .item.highlighted{background:rgba(249,115,22,0.12);color:#fdba74}
+  .dc-bar-row{cursor:pointer;transition:all 0.25s;padding:2px 4px;border-radius:3px}
+  .dc-bar-row:hover{background:rgba(0,212,255,0.06)}
+  .dc-bar-row:hover .bar-fill{filter:brightness(1.3);box-shadow:0 0 12px rgba(0,212,255,0.4)}
+  .dc-bar-row:active .bar-fill{transform:scaleX(1.05)}
+  .pie-tooltip{position:fixed;pointer-events:none;z-index:9999;background:rgba(13,21,37,0.96);border:1px solid var(--border);padding:8px 12px;font-size:10px;color:var(--text);box-shadow:0 8px 24px rgba(0,0,0,0.6);opacity:0;transition:opacity 0.15s;white-space:nowrap}
+  .pie-tooltip.show{opacity:1}
+  .pie-tooltip .tt-label{color:var(--text-dim);font-size:8px;margin-bottom:2px}
+  .pie-tooltip .tt-val{font-family:Courier New,monospace;font-size:13px;font-weight:700}
+  .pie-tooltip .tt-pct{color:var(--text-dim);font-size:9px;margin-left:6px}
+
 </style>
 </head>
 <body>
@@ -803,7 +819,7 @@ function renderDataCenter(r){
   document.getElementById('dcEarned').textContent='¥'+detailEarned.toLocaleString();
   document.getElementById('dcTokens').textContent=Math.round(detailTokens).toLocaleString()+' K';
 
-  // Pie chart
+  // Pie chart with interactivity
   const pc=document.getElementById('dcPieCanvas'),pctx=pc.getContext('2d');
   const cx=70,cy=70,outerR=55,innerR=30;
   const counts={};counts[r.caseType]=(counts[r.caseType]||0)+Math.floor(detailCases*0.35);
@@ -811,22 +827,95 @@ function renderDataCenter(r){
   counts['其他类型']=Math.floor(detailCases*0.08);
   const total=detailCases;
   const entries=Object.entries(counts).sort((a,b)=>b[1]-a[1]);
-  pctx.clearRect(0,0,140,140);
-  let angle=-Math.PI/2;
+
+  // Store segment data for hit testing
+  let segs=[],angle=-Math.PI/2;
   entries.forEach(([type,count],i)=>{
     const sa=(count/total)*Math.PI*2;
-    pctx.beginPath();pctx.arc(cx,cy,outerR,angle,angle+sa);pctx.arc(cx,cy,innerR,angle+sa,angle,true);pctx.closePath();
-    pctx.fillStyle=caseColors[i%caseColors.length];pctx.fill();
-    const ma=angle+sa/2;
-    pctx.fillStyle=caseColors[i%caseColors.length];
-    pctx.font='bold 6px "PingFang SC","Microsoft YaHei",monospace';
-    pctx.textAlign=ma>Math.PI/2&&ma<Math.PI*1.5?'right':'left';
-    pctx.fillText(type.slice(0,3)+Math.round(count/total*100)+'%',cx+Math.cos(ma)*(outerR+12),cy+Math.sin(ma)*(outerR+12)+1);
+    segs.push({type,count,i,startAngle:angle,endAngle:angle+sa,color:caseColors[i%caseColors.length]});
     angle+=sa;
   });
-  pctx.fillStyle='#e2e8f0';pctx.font='bold 10px "Courier New",monospace';pctx.textAlign='center';pctx.fillText(total,cx,cy-2);
-  pctx.fillStyle='#8899b4';pctx.font='5px "PingFang SC","Microsoft YaHei",monospace';pctx.fillText('总案件',cx,cy+9);
-  document.getElementById('dcPieLegend').innerHTML=entries.map(([type,count],i)=>'<div class="item"><span><span class="swatch" style="background:'+caseColors[i%caseColors.length]+'"></span>'+type.slice(0,6)+'</span><span class="pct">'+count+'<span style="color:#475569;font-weight:400">/'+total+'</span></span></div>').join('');
+  window._dcPieSegs=segs;
+  window._dcPieTotal=total;
+
+  // Tooltip element (create once)
+  let tt=document.getElementById('pieTooltip');
+  if(!tt){tt=document.createElement('div');tt.id='pieTooltip';tt.className='pie-tooltip';document.body.appendChild(tt);}
+
+  function drawDcPie(hoverIdx){
+    pctx.clearRect(0,0,140,140);
+    segs.forEach((seg,i)=>{
+      const isHovered=i===hoverIdx;
+      const explode=isHovered?4:0;
+      const ma=seg.startAngle+(seg.endAngle-seg.startAngle)/2;
+      const dx=Math.cos(ma)*explode,dy=Math.sin(ma)*explode;
+      pctx.beginPath();
+      pctx.arc(cx+dx,cy+dy,isHovered?outerR+3:outerR,seg.startAngle,seg.endAngle);
+      pctx.arc(cx+dx,cy+dy,isHovered?innerR-3:innerR,seg.endAngle,seg.startAngle,true);
+      pctx.closePath();
+      pctx.fillStyle=seg.color;
+      pctx.globalAlpha=isHovered?1:(hoverIdx>=0?0.35:0.85);
+      pctx.fill();
+      pctx.globalAlpha=1;
+      if(isHovered){
+        pctx.strokeStyle='rgba(255,255,255,0.4)';pctx.lineWidth=1.5;pctx.stroke();
+      }
+      // Label
+      if(!isHovered||hoverIdx<0){
+        const la=seg.startAngle+(seg.endAngle-seg.startAngle)/2;
+        pctx.fillStyle=seg.color;
+        pctx.font='bold 6px "PingFang SC","Microsoft YaHei",monospace';
+        pctx.textAlign=la>Math.PI/2&&la<Math.PI*1.5?'right':'left';
+        pctx.fillText(seg.type.slice(0,3)+Math.round(seg.count/total*100)+'%',cx+Math.cos(la)*(outerR+12),cy+Math.sin(la)*(outerR+12)+1);
+      }
+    });
+    pctx.fillStyle='#e2e8f0';pctx.font='bold 10px "Courier New",monospace';pctx.textAlign='center';
+    pctx.fillText(hoverIdx>=0?segs[hoverIdx].count:total,cx,cy-2);
+    pctx.fillStyle='#8899b4';pctx.font='5px "PingFang SC","Microsoft YaHei",monospace';
+    pctx.fillText(hoverIdx>=0?segs[hoverIdx].type.slice(0,4):'总案件',cx,cy+9);
+  }
+
+  // Mouse tracking
+  let hoveredSeg=-1;
+  pc.onmousemove=function(e){
+    const rect=pc.getBoundingClientRect();
+    const mx=(e.clientX-rect.left)*(140/rect.width);
+    const my=(e.clientY-rect.top)*(140/rect.height);
+    const dx=mx-cx,dy=my-cy,dist=Math.sqrt(dx*dx+dy*dy);
+    let found=-1;
+    if(dist>=innerR-2&&dist<=outerR+5){
+      let a=Math.atan2(dy,dx);
+      if(a<-Math.PI/2)a+=Math.PI*2;
+      for(let i=0;i<segs.length;i++){
+        let sa=segs[i].startAngle,ea=segs[i].endAngle;
+        if(sa<-Math.PI/2)sa+=Math.PI*2;
+        if(ea<-Math.PI/2)ea+=Math.PI*2;
+        if(a>=sa&&a<=ea){found=i;break}
+      }
+    }
+    if(found!==hoveredSeg){
+      hoveredSeg=found;
+      drawDcPie(found);
+      // Update legend highlighting
+      document.querySelectorAll('#dcPieLegend .item').forEach((el,i)=>{el.classList.toggle('highlighted',i===found)});
+      // Update tooltip
+      if(found>=0){
+        const s=segs[found];
+        tt.innerHTML='<div class="tt-label">'+s.type+'</div><span class="tt-val">'+s.count+' 件</span><span class="tt-pct">'+Math.round(s.count/total*100)+'%</span>';
+        tt.style.left=(e.clientX+16)+'px';tt.style.top=(e.clientY-50)+'px';
+        tt.classList.add('show');
+      }else{tt.classList.remove('show')}
+    }else if(found>=0){
+      tt.style.left=(e.clientX+16)+'px';tt.style.top=(e.clientY-50)+'px';
+    }
+  };
+  pc.onmouseleave=function(){hoveredSeg=-1;drawDcPie(-1);tt.classList.remove('show');document.querySelectorAll('#dcPieLegend .item').forEach(el=>el.classList.remove('highlighted'))};
+
+  // Initial draw
+  drawDcPie(-1);
+
+  // Legend with hover interaction
+  document.getElementById('dcPieLegend').innerHTML=entries.map(([type,count],i)=>'<div class="item" data-idx="'+i+'" onmouseenter="window._dcPieLegendHover('+i+')" onmouseleave="window._dcPieLegendLeave()"><span><span class="swatch" style="background:'+caseColors[i%caseColors.length]+'"></span>'+type.slice(0,6)+'</span><span class="pct">'+count+'<span style="color:#475569;font-weight:400">/'+total+'</span></span></div>').join('');
 
   // Case table
   const recent=[];
@@ -891,6 +980,54 @@ function renderLogCenter(r){
 }
 
 // ==================== OVERLAY TICK ====================
+// Pie chart legend hover handlers (global for inline onclick)
+window._dcPieLegendHover=function(idx){
+  const segs=window._dcPieSegs;if(!segs)return;
+  const pc=document.getElementById('dcPieCanvas'),pctx=pc.getContext('2d');
+  const cx=70,cy=70,outerR=55,innerR=30,total=window._dcPieTotal||detailCases;
+  pctx.clearRect(0,0,140,140);
+  segs.forEach((seg,i)=>{
+    const isHovered=i===idx;
+    const explode=isHovered?4:0;
+    const ma=seg.startAngle+(seg.endAngle-seg.startAngle)/2;
+    const dx=Math.cos(ma)*explode,dy=Math.sin(ma)*explode;
+    pctx.beginPath();
+    pctx.arc(cx+dx,cy+dy,isHovered?outerR+3:outerR,seg.startAngle,seg.endAngle);
+    pctx.arc(cx+dx,cy+dy,isHovered?innerR-3:innerR,seg.endAngle,seg.startAngle,true);
+    pctx.closePath();
+    pctx.fillStyle=seg.color;
+    pctx.globalAlpha=isHovered?1:0.35;
+    pctx.fill();pctx.globalAlpha=1;
+    if(isHovered){pctx.strokeStyle='rgba(255,255,255,0.4)';pctx.lineWidth=1.5;pctx.stroke()}
+  });
+  pctx.fillStyle='#e2e8f0';pctx.font='bold 10px "Courier New",monospace';pctx.textAlign='center';
+  pctx.fillText(segs[idx].count,cx,cy-2);
+  pctx.fillStyle='#8899b4';pctx.font='5px "PingFang SC","Microsoft YaHei",monospace';
+  pctx.fillText(segs[idx].type.slice(0,4),cx,cy+9);
+  document.querySelectorAll('#dcPieLegend .item').forEach((el,i)=>{el.classList.toggle('highlighted',i===idx)});
+};
+window._dcPieLegendLeave=function(){
+  const segs=window._dcPieSegs;if(!segs)return;
+  const pc=document.getElementById('dcPieCanvas'),pctx=pc.getContext('2d');
+  const cx=70,cy=70,outerR=55,innerR=30,total=window._dcPieTotal||detailCases;
+  pctx.clearRect(0,0,140,140);
+  segs.forEach((seg,i)=>{
+    const ma=seg.startAngle+(seg.endAngle-seg.startAngle)/2;
+    pctx.beginPath();
+    pctx.arc(cx,cy,outerR,seg.startAngle,seg.endAngle);
+    pctx.arc(cx,cy,innerR,seg.endAngle,seg.startAngle,true);
+    pctx.closePath();
+    pctx.fillStyle=seg.color;pctx.globalAlpha=0.85;pctx.fill();pctx.globalAlpha=1;
+    const la=seg.startAngle+(seg.endAngle-seg.startAngle)/2;
+    pctx.fillStyle=seg.color;pctx.font='bold 6px "PingFang SC","Microsoft YaHei",monospace';
+    pctx.textAlign=la>Math.PI/2&&la<Math.PI*1.5?'right':'left';
+    pctx.fillText(seg.type.slice(0,3)+Math.round(seg.count/total*100)+'%',cx+Math.cos(la)*(outerR+12),cy+Math.sin(la)*(outerR+12)+1);
+  });
+  pctx.fillStyle='#e2e8f0';pctx.font='bold 10px "Courier New",monospace';pctx.textAlign='center';pctx.fillText(total,cx,cy-2);
+  pctx.fillStyle='#8899b4';pctx.font='5px "PingFang SC","Microsoft YaHei",monospace';pctx.fillText('总案件',cx,cy+9);
+  document.querySelectorAll('#dcPieLegend .item').forEach(el=>el.classList.remove('highlighted'));
+};
+
 function overlayTick(){
   if(!detailRobotId)return;
   const r=robots.find(r=>r.id===detailRobotId);
