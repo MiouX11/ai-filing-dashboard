@@ -210,6 +210,18 @@
   @media(max-width:1400px){.left-panel{width:220px}.region-robots{grid-template-columns:repeat(auto-fill,minmax(120px,1fr))}}
   @media(max-width:1200px){.header{flex-wrap:wrap;gap:8px;padding:8px 12px}.header-center{display:none}.stats-bar{flex-wrap:wrap;gap:4px}.stat-card{min-width:calc(33% - 4px)}.main-content{flex-direction:column}.left-panel{width:100%;flex-direction:row;gap:6px;min-height:auto}.center-panel{max-height:300px;min-height:200px}.right-panel{max-height:none;padding-left:0}.region-robots{grid-template-columns:repeat(auto-fill,minmax(120px,1fr))}}
   @media(max-width:768px){.app{padding:4px 5px}.header{padding:6px 10px}.title-group h1{font-size:13px}.stat-card{min-width:calc(50% - 3px);padding:6px 8px}.stat-card .info .n{font-size:16px}.robot-card{padding:5px}.robot-card .r-name{font-size:8px}.region-robots{grid-template-columns:repeat(auto-fill,minmax(100px,1fr))}.center-panel{max-height:250px;min-height:180px}}
+  /* Interactive charts */
+  .pie-wrap canvas{cursor:pointer;transition:filter 0.2s}
+  .pie-wrap:hover canvas{filter:brightness(1.05)}
+  .pie-legend .item{cursor:pointer;transition:all 0.2s;padding:1px 4px;border-radius:2px}
+  .pie-legend .item:hover{background:rgba(255,255,255,0.04);color:#fff}
+  .pie-legend .item.highlighted{background:rgba(249,115,22,0.12);color:#fdba74}
+  .pie-tooltip{position:fixed;pointer-events:none;z-index:9999;background:rgba(13,21,37,0.96);border:1px solid var(--border);padding:8px 12px;font-size:10px;color:var(--text);box-shadow:0 8px 24px rgba(0,0,0,0.6);opacity:0;transition:opacity 0.15s;white-space:nowrap}
+  .pie-tooltip.show{opacity:1}
+  .pie-tooltip .tt-label{color:var(--text-dim);font-size:8px;margin-bottom:2px}
+  .pie-tooltip .tt-val{font-family:Courier New,monospace;font-size:13px;font-weight:700}
+  .pie-tooltip .tt-pct{color:var(--text-dim);font-size:9px;margin-left:6px}
+
 </style>
 </head>
 <body>
@@ -581,27 +593,118 @@ function onRobotClick(robotId){
 function toggleRegion(ri){if(expandedRegions.has(ri))expandedRegions.delete(ri);else expandedRegions.add(ri);renderRegions()}
 
 // ==================== PIE CHARTS ====================
+// Tooltip element (shared)
+let _pieTooltip=null;
+function _ensureTooltip(){if(!_pieTooltip){_pieTooltip=document.createElement('div');_pieTooltip.id='pieTooltip';_pieTooltip.className='pie-tooltip';document.body.appendChild(_pieTooltip)}return _pieTooltip}
+
+function _drawPieSegs(ctx,segs,total,hoverIdx,cx,cy,oR,iR){
+  ctx.clearRect(0,0,200,200);
+  segs.forEach((seg,i)=>{
+    const isHov=i===hoverIdx,explode=isHov?3:0;
+    const ma=seg.startAngle+(seg.endAngle-seg.startAngle)/2;
+    const dx=Math.cos(ma)*explode,dy=Math.sin(ma)*explode;
+    ctx.beginPath();
+    ctx.arc(cx+dx,cy+dy,isHov?oR+2:oR,seg.startAngle,seg.endAngle);
+    ctx.arc(cx+dx,cy+dy,isHov?iR-2:iR,seg.endAngle,seg.startAngle,true);
+    ctx.closePath();
+    ctx.fillStyle=seg.color;
+    ctx.globalAlpha=isHov?1:(hoverIdx>=0?0.3:0.85);
+    ctx.fill();ctx.globalAlpha=1;
+    if(isHov){ctx.strokeStyle='rgba(255,255,255,0.4)';ctx.lineWidth=1.5;ctx.stroke()}
+    if(!isHov||hoverIdx<0){
+      const la=seg.startAngle+(seg.endAngle-seg.startAngle)/2;
+      ctx.fillStyle=seg.color;
+      ctx.font='bold 6px "PingFang SC","Microsoft YaHei",monospace';
+      ctx.textAlign=la>Math.PI/2&&la<Math.PI*1.5?'right':'left';
+      ctx.fillText(seg.label.slice(0,3)+Math.round(seg.count/total*100)+'%',cx+Math.cos(la)*(oR+10),cy+Math.sin(la)*(oR+10)+1);
+    }
+  });
+  const centerVal=hoverIdx>=0?segs[hoverIdx].count:total;
+  const centerLabel=hoverIdx>=0?segs[hoverIdx].label.slice(0,4):(total>50?'总案件':'总计');
+  ctx.fillStyle='#e2e8f0';ctx.font='bold 10px "Courier New",monospace';ctx.textAlign='center';ctx.fillText(centerVal,cx,cy-1);
+  ctx.fillStyle='#8899b4';ctx.font='5px "PingFang SC","Microsoft YaHei",monospace';ctx.fillText(centerLabel,cx,cy+9);
+}
+
+function _bindPieHover(canvasId,legendId,segs,total,cx,cy,oR,iR,scaleW,scaleH){
+  const canvas=document.getElementById(canvasId),ctx=canvas.getContext('2d');
+  let hovered=-1;
+  canvas.onmousemove=function(e){
+    const rect=canvas.getBoundingClientRect();
+    const mx=(e.clientX-rect.left)*(scaleW/rect.width),my=(e.clientY-rect.top)*(scaleH/rect.height);
+    const dx=mx-cx,dy=my-cy,dist=Math.sqrt(dx*dx+dy*dy);
+    let found=-1;
+    if(dist>=iR-2&&dist<=oR+5){
+      let a=Math.atan2(dy,dx);if(a<-Math.PI/2)a+=Math.PI*2;
+      for(let i=0;i<segs.length;i++){
+        let sa=segs[i].startAngle,ea=segs[i].endAngle;
+        if(sa<-Math.PI/2)sa+=Math.PI*2;if(ea<-Math.PI/2)ea+=Math.PI*2;
+        if(a>=sa&&a<=ea){found=i;break}
+      }
+    }
+    if(found!==hovered){hovered=found;_drawPieSegs(ctx,segs,total,found,cx,cy,oR,iR);
+      document.querySelectorAll('#'+legendId+' .item').forEach((el,i)=>{el.classList.toggle('highlighted',i===found)});
+      const tt=_ensureTooltip();
+      if(found>=0){const s=segs[found];tt.innerHTML='<div class="tt-label">'+s.label+'</div><span class="tt-val">'+s.count+' 件</span><span class="tt-pct">'+Math.round(s.count/total*100)+'%</span>';tt.style.left=(e.clientX+16)+'px';tt.style.top=(e.clientY-50)+'px';tt.classList.add('show')}
+      else{tt.classList.remove('show')}
+    }else if(found>=0){const tt=_ensureTooltip();tt.style.left=(e.clientX+16)+'px';tt.style.top=(e.clientY-50)+'px'}
+  };
+  canvas.onmouseleave=function(){hovered=-1;_drawPieSegs(ctx,segs,total,-1,cx,cy,oR,iR);_ensureTooltip().classList.remove('show');document.querySelectorAll('#'+legendId+' .item').forEach(el=>el.classList.remove('highlighted'))};
+}
+
 function drawPieChart(){
   const pc=document.getElementById('pieCanvas'),ctx=pc.getContext('2d'),cx=50,cy=50,oR=42,iR=24;
   const counts={};robots.forEach(r=>{counts[r.caseType]=(counts[r.caseType]||0)+1});
   const entries=Object.entries(counts).sort((a,b)=>b[1]-a[1]),total=robots.length;
-  ctx.clearRect(0,0,100,100);let angle=-Math.PI/2;
-  entries.forEach(([type,count],i)=>{const sa=(count/total)*Math.PI*2;ctx.beginPath();ctx.arc(cx,cy,oR,angle,angle+sa);ctx.arc(cx,cy,iR,angle+sa,angle,true);ctx.closePath();ctx.fillStyle=caseColors[i%10];ctx.fill();const ma=angle+sa/2;ctx.fillStyle=caseColors[i%10];ctx.font='bold 6px "PingFang SC","Microsoft YaHei",monospace';ctx.textAlign=ma>Math.PI/2&&ma<Math.PI*1.5?'right':'left';ctx.fillText(type.slice(0,2)+Math.round(count/total*100)+'%',cx+Math.cos(ma)*(oR+8),cy+Math.sin(ma)*(oR+8)+1);angle+=sa});
-  ctx.fillStyle='#e2e8f0';ctx.font='bold 10px "Courier New",monospace';ctx.textAlign='center';ctx.fillText(total,cx,cy-1);
-  ctx.fillStyle='#8899b4';ctx.font='5.5px "PingFang SC","Microsoft YaHei",monospace';ctx.fillText('总案件',cx,cy+10);
-  document.getElementById('pieLegend').innerHTML=entries.map(([type,count],i)=>'<div class="item"><span><span class="swatch" style="background:'+caseColors[i%10]+'"></span>'+type.slice(0,6)+'</span><span class="pct">'+count+'<span style="color:#475569;font-weight:400">/'+total+'</span></span></div>').join('');
+  const segs=[];let angle=-Math.PI/2;
+  entries.forEach(([type,count],i)=>{
+    const sa=(count/total)*Math.PI*2;
+    segs.push({label:type,count,startAngle:angle,endAngle:angle+sa,color:caseColors[i%10]});
+    angle+=sa;
+  });
+  _drawPieSegs(ctx,segs,total,-1,cx,cy,oR,iR);
+  _bindPieHover('pieCanvas','pieLegend',segs,total,cx,cy,oR,iR,100,100);
+  document.getElementById('pieLegend').innerHTML=entries.map(([type,count],i)=>
+    '<div class="item" data-idx="'+i+'" onmouseenter="_pieLegendHover('+i+',\'pieCanvas\',\'pieLegend\')" onmouseleave="_pieLegendLeave(\'pieCanvas\',\'pieLegend\')"><span><span class="swatch" style="background:'+caseColors[i%10]+'"></span>'+type.slice(0,6)+'</span><span class="pct">'+count+'<span style="color:#475569;font-weight:400">/'+total+'</span></span></div>'
+  ).join('');
+  window._pieChartSegs=segs;window._pieChartTotal=total;
 }
 
 function drawRegionPie(){
   const pc=document.getElementById('regionPieCanvas'),ctx=pc.getContext('2d'),cx=50,cy=50,oR=42,iR=24;
   const counts={};robots.forEach(r=>{const k=regions[r.region].name;counts[k]=(counts[k]||0)+1});
   const entries=Object.entries(counts).sort((a,b)=>b[1]-a[1]),total=robots.length;
-  ctx.clearRect(0,0,100,100);let angle=-Math.PI/2;
-  entries.forEach(([name,count],i)=>{const sa=(count/total)*Math.PI*2;ctx.beginPath();ctx.arc(cx,cy,oR,angle,angle+sa);ctx.arc(cx,cy,iR,angle+sa,angle,true);ctx.closePath();ctx.fillStyle=regionColors[i%10];ctx.fill();const ma=angle+sa/2;ctx.fillStyle=regionColors[i%10];ctx.font='bold 6px "PingFang SC","Microsoft YaHei",monospace';ctx.textAlign=ma>Math.PI/2&&ma<Math.PI*1.5?'right':'left';ctx.fillText(name.slice(0,2)+Math.round(count/total*100)+'%',cx+Math.cos(ma)*(oR+8),cy+Math.sin(ma)*(oR+8)+1);angle+=sa});
-  ctx.fillStyle='#e2e8f0';ctx.font='bold 10px "Courier New",monospace';ctx.textAlign='center';ctx.fillText('10区',cx,cy-1);
-  ctx.fillStyle='#8899b4';ctx.font='5.5px "PingFang SC","Microsoft YaHei",monospace';ctx.fillText('对接法院',cx,cy+10);
-  document.getElementById('regionPieLegend').innerHTML=entries.map(([name,count],i)=>'<div class="item"><span><span class="swatch" style="background:'+regionColors[i%10]+'"></span>'+name.slice(0,6)+'</span><span class="pct">'+count+'<span style="color:#475569;font-weight:400">/'+total+'</span></span></div>').join('');
+  const segs=[];let angle=-Math.PI/2;
+  entries.forEach(([name,count],i)=>{
+    const sa=(count/total)*Math.PI*2;
+    segs.push({label:name,count,startAngle:angle,endAngle:angle+sa,color:regionColors[i%10]});
+    angle+=sa;
+  });
+  _drawPieSegs(ctx,segs,total,-1,cx,cy,oR,iR);
+  _bindPieHover('regionPieCanvas','regionPieLegend',segs,total,cx,cy,oR,iR,100,100);
+  document.getElementById('regionPieLegend').innerHTML=entries.map(([name,count],i)=>
+    '<div class="item" data-idx="'+i+'" onmouseenter="_pieLegendHover('+i+',\'regionPieCanvas\',\'regionPieLegend\')" onmouseleave="_pieLegendLeave(\'regionPieCanvas\',\'regionPieLegend\')"><span><span class="swatch" style="background:'+regionColors[i%10]+'"></span>'+name.slice(0,6)+'</span><span class="pct">'+count+'<span style="color:#475569;font-weight:400">/'+total+'</span></span></div>'
+  ).join('');
+  window._regionPieSegs=segs;window._regionPieTotal=total;
 }
+
+// Global legend hover handlers
+window._pieLegendHover=function(idx,canvasId,legendId){
+  const segs=canvasId==='regionPieCanvas'?window._regionPieSegs:window._pieChartSegs;
+  const total=canvasId==='regionPieCanvas'?window._regionPieTotal:window._pieChartTotal;
+  if(!segs)return;
+  const pc=document.getElementById(canvasId),ctx=pc.getContext('2d');
+  const cx=50,cy=50,oR=42,iR=24;
+  _drawPieSegs(ctx,segs,total,idx,cx,cy,oR,iR);
+  document.querySelectorAll('#'+legendId+' .item').forEach((el,i)=>{el.classList.toggle('highlighted',i===idx)});
+};
+window._pieLegendLeave=function(canvasId,legendId){
+  const segs=canvasId==='regionPieCanvas'?window._regionPieSegs:window._pieChartSegs;
+  const total=canvasId==='regionPieCanvas'?window._regionPieTotal:window._pieChartTotal;
+  if(!segs)return;
+  const pc=document.getElementById(canvasId),ctx=pc.getContext('2d');
+  _drawPieSegs(ctx,segs,total,-1,50,50,42,24);
+  document.querySelectorAll('#'+legendId+' .item').forEach(el=>el.classList.remove('highlighted'));
+};
 
 // ==================== STATS ====================
 function updateStats(){
