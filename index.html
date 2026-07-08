@@ -715,6 +715,7 @@ let detailEarned=0;
 let detailDebtAmt=0;
 let detailTokens=0;
 
+let detailRobotId=null;const LS_ROBOTS='dash_robots',LS_USERS='dash_users',LS_LOGS='dash_logs',LS_COMPS='dash_completions';function syncRobotsToStorage(){try{localStorage.setItem(LS_ROBOTS,JSON.stringify(robots))}catch(e){}}function claimRobotInStorage(robotId,userName){const r=robots.find(r=>r.id===robotId);if(r){r.controller=userName;r.controllerLoginTime=Date.now();syncRobotsToStorage()}}function releaseRobotInStorage(robotId){const r=robots.find(r=>r.id===robotId);if(r){r.controller=null;r.controllerLoginTime=null;syncRobotsToStorage()}}
 function openRobotDetail(id){
   // Release previous robot if any
   if(detailRobotId!==null&&detailRobotId!==id)releaseRobotInStorage(detailRobotId);
